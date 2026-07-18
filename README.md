@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mécatrack
 
-## Getting Started
+SaaS de suivi de réparation en temps réel pour garages automobiles indépendants.
+Le garagiste gère ses dossiers ; le client suit sa réparation via un lien unique
+(photos, statuts, devis signés en ligne, messagerie), sans compte ni application.
 
-First, run the development server:
+**Stack :** Next.js 14 (App Router) · Supabase (BDD, Auth, Storage) · Stripe · Twilio · Resend · Tailwind CSS
+
+## Démarrage rapide (mode démo)
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sans aucune clé configurée, l'application démarre en **mode démo** :
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Données fictives en mémoire (Garage Lemoine, 6 dossiers réalistes)
+- Authentification désactivée (le bouton « Se connecter » entre directement)
+- Page de suivi client d'exemple : `http://localhost:3000/suivi/demo`
+- Les SMS/emails sont journalisés dans la console au lieu d'être envoyés
+- Le paiement Stripe est simulé
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+C'est aussi l'environnement idéal pour **faire une démonstration à un garagiste**.
 
-## Learn More
+## Passage en production
 
-To learn more about Next.js, take a look at the following resources:
+1. **Supabase** : créer un projet, exécuter `supabase/schema.sql` dans le SQL
+   Editor, puis renseigner les 3 variables `SUPABASE`. Désactiver la
+   confirmation d'email dans Auth → Settings si vous voulez une inscription
+   immédiate.
+2. **Stripe** : créer deux produits (« Mécatrack Essentiel » 19 €/mois,
+   « Mécatrack Pro » 39 €/mois), renseigner les `STRIPE_PRICE_ID_*`, la clé
+   secrète, et configurer le webhook `https://votredomaine/api/webhooks/stripe`
+   (événements : `checkout.session.completed`,
+   `customer.subscription.updated`, `customer.subscription.deleted`,
+   `invoice.payment_failed`).
+3. **Twilio** : un numéro SMS français, renseigner les 3 variables `TWILIO`.
+4. **Resend** : vérifier le domaine d'envoi, renseigner `RESEND_API_KEY` et `EMAIL_FROM`.
+5. **Vercel** : déployer, définir `NEXT_PUBLIC_APP_URL` sur le domaine final.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Dès que `NEXT_PUBLIC_SUPABASE_URL` est présent, le mode démo se coupe
+automatiquement et l'application utilise les vrais services.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Modèle tarifaire
 
-## Deploy on Vercel
+| Formule | Prix | Contenu |
+|---|---|---|
+| Essai | 14 jours gratuits | Toutes les fonctionnalités Pro, sans carte bancaire |
+| Essentiel | 19 €/mois | Dossiers illimités, suivi, photos (10/dossier), devis signés, messagerie |
+| Pro | 39 €/mois | + SMS automatiques, 20 photos/dossier, logo, retrait du branding |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+À l'expiration de l'essai sans abonnement : compte en lecture seule
+(les dossiers restent consultables, la création est suspendue).
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Structure
+
+```
+app/
+  page.tsx               Landing page
+  auth/                  Connexion, inscription, mot de passe
+  dashboard/
+    dossiers/            Liste, création, détail dossier
+    compte/              Infos garage + abonnement
+  suivi/[token]/         Page publique client (sans auth)
+  api/stripe/            Checkout + portail
+  api/webhooks/stripe/   Webhooks abonnement
+components/              UI, dashboard, suivi, landing
+lib/
+  db.ts                  Couche données unifiée (démo ↔ Supabase)
+  demo/                  Store en mémoire du mode démo
+  plans.ts               Formules et limites
+  notifications.ts       SMS Twilio + emails Resend
+supabase/schema.sql      Schéma complet + RLS + bucket photos
+```
