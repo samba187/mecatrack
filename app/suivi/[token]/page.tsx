@@ -42,19 +42,27 @@ export default async function PageSuivi({
     <div className="min-h-screen bg-surface pb-10">
       {/* En-tête garage */}
       <header className="border-b border-slate-200 bg-white">
-        <div className="mx-auto flex max-w-xl items-center justify-between gap-3 px-4 py-4">
+        <div className="mx-auto flex max-w-xl items-center gap-3 px-4 py-4">
+          {garage.logo_url && (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={garage.logo_url}
+              alt={garage.nom}
+              className="h-10 w-auto max-w-[96px] shrink-0 object-contain"
+            />
+          )}
           <div className="min-w-0">
             <p className="truncate text-base font-bold text-ink">
               {garage.nom}
             </p>
             <div className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-slate-500">
-              {garage.telephone && (
+              {(garage.telephone || garage.telephone_mobile) && (
                 <a
-                  href={`tel:${garage.telephone}`}
+                  href={`tel:${garage.telephone ?? garage.telephone_mobile}`}
                   className="flex items-center gap-1 hover:text-ink"
                 >
                   <Phone className="h-3 w-3" />
-                  {garage.telephone}
+                  {garage.telephone ?? garage.telephone_mobile}
                 </a>
               )}
               {garage.adresse && (
@@ -78,7 +86,7 @@ export default async function PageSuivi({
         >
           <p className="text-sm text-slate-500">
             Suivi de votre {dossier.vehicule_marque} {dossier.vehicule_modele}
-            <span className="ml-2 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-700">
+            <span className="ml-2 inline-block whitespace-nowrap rounded bg-slate-100 px-1.5 py-0.5 font-mono text-xs font-medium text-slate-700">
               {formatImmat(dossier.vehicule_immat)}
             </span>
           </p>

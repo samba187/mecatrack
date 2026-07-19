@@ -12,6 +12,14 @@ const optionnel = z
   .trim()
   .transform((v) => (v === "" ? null : v));
 
+// Image envoyée sous forme de data URL (redimensionnée côté client) ou vide.
+const imageOptionnelle = z
+  .string()
+  .trim()
+  .max(3_000_000, "Image trop lourde")
+  .refine((v) => v === "" || v.startsWith("data:image/"), "Image invalide")
+  .transform((v) => (v === "" ? null : v));
+
 export const schemaNouveauDossier = z.object({
   client_nom: z.string().trim().min(2, "Le nom du client est obligatoire"),
   client_telephone: telephone,
@@ -104,6 +112,7 @@ export const schemaGarage = z.object({
   nom: z.string().trim().min(2, "Le nom du garage est obligatoire"),
   adresse: optionnel,
   telephone: telephone,
+  telephone_mobile: telephone,
   siret: optionnel,
   email: z
     .string()
@@ -111,6 +120,8 @@ export const schemaGarage = z.object({
     .email("Email invalide")
     .or(z.literal(""))
     .transform((v) => (v === "" ? null : v)),
+  logo_url: imageOptionnelle,
+  cachet_url: imageOptionnelle,
 });
 
 export const schemaInscription = z.object({

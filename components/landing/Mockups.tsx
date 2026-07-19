@@ -64,7 +64,7 @@ function DossierLigne({
           <p className="truncate text-[13px] font-semibold text-ink">{nom}</p>
           <p className="truncate text-[11px] text-slate-500">{vehicule}</p>
         </div>
-        <span className="shrink-0 rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-700">
+        <span className="shrink-0 whitespace-nowrap rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[10px] font-medium text-slate-700">
           {immat}
         </span>
       </div>
@@ -115,7 +115,7 @@ export function DashboardMock() {
         <span className="flex-1 py-1 text-center text-slate-500">Livrés</span>
         <span className="flex-1 py-1 text-center text-slate-500">Tous</span>
       </div>
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
         <DossierLigne nom="Karim Benaïssa" vehicule="Peugeot 308" immat="GD-482-KV" statut="attente_validation" photos={3} devis messages={1} />
         <DossierLigne nom="Marie Deschamps" vehicule="Renault Clio V" immat="FH-256-ZR" statut="en_cours" photos={1} />
         <DossierLigne nom="Antoine Perrot" vehicule="VW Golf 7 GTD" immat="EK-914-TC" statut="pret" photos={2} />

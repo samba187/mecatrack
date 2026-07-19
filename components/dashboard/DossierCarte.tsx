@@ -19,7 +19,7 @@ export function DossierCarte({ dossier }: { dossier: DossierResume }) {
             {dossier.vehicule_marque} {dossier.vehicule_modele}
           </p>
         </div>
-        <span className="shrink-0 rounded-md bg-slate-100 px-2 py-1 font-mono text-xs font-medium tracking-wide text-slate-700">
+        <span className="shrink-0 whitespace-nowrap rounded-md bg-slate-100 px-2 py-1 font-mono text-xs font-medium tracking-wide text-slate-700">
           {formatImmat(dossier.vehicule_immat)}
         </span>
       </div>

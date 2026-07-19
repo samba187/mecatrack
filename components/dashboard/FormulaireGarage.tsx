@@ -5,6 +5,7 @@ import { AlertCircle, Check } from "lucide-react";
 import { actionMajGarage, type EtatFormulaire } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/Button";
 import { Champ, Input } from "@/components/ui/Input";
+import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { Garage } from "@/lib/types";
 
 function BoutonEnregistrer({ ok }: { ok?: boolean }) {
@@ -32,12 +33,27 @@ export function FormulaireGarage({ garage }: { garage: Garage }) {
         <Champ label="Nom du garage" htmlFor="nom" obligatoire erreur={err.nom}>
           <Input id="nom" name="nom" defaultValue={garage.nom} required />
         </Champ>
-        <Champ label="Téléphone" htmlFor="telephone" erreur={err.telephone}>
+        <Champ label="Téléphone fixe" htmlFor="telephone" erreur={err.telephone}>
           <Input
             id="telephone"
             name="telephone"
             type="tel"
+            placeholder="01 48 22 61 90"
             defaultValue={garage.telephone ?? ""}
+          />
+        </Champ>
+        <Champ
+          label="Téléphone mobile"
+          htmlFor="telephone_mobile"
+          erreur={err.telephone_mobile}
+          aide="Reçoit les SMS d'alerte (réponses clients, devis signés)."
+        >
+          <Input
+            id="telephone_mobile"
+            name="telephone_mobile"
+            type="tel"
+            placeholder="06 12 34 56 78"
+            defaultValue={garage.telephone_mobile ?? ""}
           />
         </Champ>
         <Champ label="Adresse" htmlFor="adresse" erreur={err.adresse} className="sm:col-span-2">
@@ -75,6 +91,29 @@ export function FormulaireGarage({ garage }: { garage: Garage }) {
             name="email"
             type="email"
             defaultValue={garage.email ?? ""}
+          />
+        </Champ>
+
+        <Champ
+          label="Logo du garage"
+          erreur={err.logo_url}
+          aide="Apparaît en haut de vos devis PDF et sur la page de suivi du client."
+        >
+          <ImageUpload
+            name="logo_url"
+            defaultValue={garage.logo_url}
+            format="jpeg"
+          />
+        </Champ>
+        <Champ
+          label="Cachet ou signature"
+          erreur={err.cachet_url}
+          aide="Photo/scan de votre tampon ou signature. Ajouté sur le devis, en plus du cachet automatique. PNG à fond transparent conseillé."
+        >
+          <ImageUpload
+            name="cachet_url"
+            defaultValue={garage.cachet_url}
+            format="png"
           />
         </Champ>
       </div>

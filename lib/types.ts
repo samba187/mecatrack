@@ -23,8 +23,10 @@ export interface Garage {
   nom: string;
   adresse: string | null;
   telephone: string | null;
+  telephone_mobile: string | null;
   email: string | null;
   logo_url: string | null;
+  cachet_url: string | null;
   siret: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -138,7 +140,10 @@ export interface DossierComplet {
 }
 
 export interface SuiviPublic {
-  garage: Pick<Garage, "nom" | "telephone" | "adresse" | "logo_url" | "plan">;
+  garage: Pick<
+    Garage,
+    "nom" | "telephone" | "telephone_mobile" | "adresse" | "logo_url" | "plan"
+  >;
   dossier: Dossier;
   photos: Photo[];
   devis: Devis[];

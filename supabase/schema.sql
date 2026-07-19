@@ -9,8 +9,10 @@ create table public.garages (
   nom text not null,
   adresse text,
   telephone text,
+  telephone_mobile text,
   email text,
-  logo_url text,
+  logo_url text,   -- data URL (image redimensionnée) ou chemin storage
+  cachet_url text, -- cachet/signature scanné du garage (data URL)
   siret text,
   stripe_customer_id text,
   stripe_subscription_id text,
@@ -19,6 +21,9 @@ create table public.garages (
   created_at timestamptz not null default now()
 );
 create unique index garages_user_id_idx on public.garages(user_id);
+-- Colonnes ajoutées après coup (sûr à ré-exécuter sur une base existante)
+alter table public.garages add column if not exists telephone_mobile text;
+alter table public.garages add column if not exists cachet_url text;
 
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),

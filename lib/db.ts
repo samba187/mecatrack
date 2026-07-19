@@ -212,7 +212,19 @@ export async function getGarageCourant(): Promise<Garage | null> {
 
 export async function majGarage(
   garage: Garage,
-  patch: Partial<Pick<Garage, "nom" | "adresse" | "telephone" | "email" | "siret">>
+  patch: Partial<
+    Pick<
+      Garage,
+      | "nom"
+      | "adresse"
+      | "telephone"
+      | "telephone_mobile"
+      | "email"
+      | "siret"
+      | "logo_url"
+      | "cachet_url"
+    >
+  >
 ): Promise<void> {
   if (DEMO_MODE) {
     Object.assign(demoDb().garage, patch);
@@ -887,6 +899,7 @@ export async function getSuiviParToken(
       garage: {
         nom: g.nom,
         telephone: g.telephone,
+        telephone_mobile: g.telephone_mobile,
         adresse: g.adresse,
         logo_url: g.logo_url,
         plan: g.plan,
@@ -915,7 +928,7 @@ export async function getSuiviParToken(
   const [garage, photos, devis, messages, historique] = await Promise.all([
     admin
       .from("garages")
-      .select("nom, telephone, adresse, logo_url, plan")
+      .select("nom, telephone, telephone_mobile, adresse, logo_url, plan")
       .eq("id", dossier.garage_id)
       .single(),
     admin

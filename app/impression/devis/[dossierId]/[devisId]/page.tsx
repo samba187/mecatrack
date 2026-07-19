@@ -34,10 +34,19 @@ export default async function PageImpressionDevis({
           {/* En-tête */}
           <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
             <div>
+              {garage.logo_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={garage.logo_url}
+                  alt={garage.nom}
+                  className="mb-2.5 h-14 w-auto max-w-[180px] object-contain"
+                />
+              )}
               <h1 className="text-2xl font-bold text-primary-900">{garage.nom}</h1>
               <div className="mt-1.5 space-y-0.5 text-sm text-slate-500">
                 {garage.adresse && <p>{garage.adresse}</p>}
                 {garage.telephone && <p>Tél. {garage.telephone}</p>}
+                {garage.telephone_mobile && <p>Mobile {garage.telephone_mobile}</p>}
                 {garage.email && <p>{garage.email}</p>}
                 {garage.siret && (
                   <p className="font-mono text-xs">SIRET {garage.siret}</p>
@@ -149,7 +158,17 @@ export default async function PageImpressionDevis({
                 Document généré via Mécatrack le {formatDateTime(devis.created_at)}.
               </p>
             </div>
-            <Cachet garage={garage} date={dossier.date_entree} />
+            <div className="flex items-end gap-4">
+              {garage.cachet_url && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={garage.cachet_url}
+                  alt="Cachet du garage"
+                  className="h-24 w-auto max-w-[150px] object-contain"
+                />
+              )}
+              <Cachet garage={garage} date={dossier.date_entree} />
+            </div>
           </div>
 
           {/* Bloc signature */}
