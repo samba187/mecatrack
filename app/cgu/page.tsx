@@ -64,8 +64,8 @@ export default function PageCgu() {
           </section>
         </div>
         <p className="mt-10 text-sm text-slate-400">
-          Document provisoire — à faire valider juridiquement avant le
-          lancement commercial.
+          Conditions générales susceptibles d&apos;évoluer. Pour toute
+          question : contact@mecatrack.fr
         </p>
       </main>
     </div>
