@@ -39,7 +39,7 @@ export async function envoyerEmail(
   try {
     const { Resend } = await import("resend");
     await new Resend(key).emails.send({
-      from: process.env.EMAIL_FROM ?? "Mécatrack <notifications@mecatrack.fr>",
+      from: process.env.EMAIL_FROM ?? "Mécatrack <notifications@mecatrack.com>",
       to: vers,
       subject: sujet,
       html,

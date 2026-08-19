@@ -59,13 +59,13 @@ export default function PageCgu() {
           <section>
             <h2 className="font-semibold text-ink">5. Contact</h2>
             <p className="mt-1.5 leading-relaxed">
-              Pour toute question : contact@mecatrack.fr
+              Pour toute question : contact@mecatrack.com
             </p>
           </section>
         </div>
         <p className="mt-10 text-sm text-slate-400">
           Conditions générales susceptibles d&apos;évoluer. Pour toute
-          question : contact@mecatrack.fr
+          question : contact@mecatrack.com
         </p>
       </main>
     </div>
