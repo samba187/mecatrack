@@ -1,8 +1,14 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Plus, Search } from "lucide-react";
-import { getGarageCourant, listDossiers, type OngletDossiers } from "@/lib/db";
+import {
+  getGarageCourant,
+  listDossiers,
+  statsGarage,
+  type OngletDossiers,
+} from "@/lib/db";
 import { DossierCarte } from "@/components/dashboard/DossierCarte";
+import { StatsCards } from "@/components/dashboard/StatsCards";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Dossiers" };
@@ -33,6 +39,7 @@ export default async function PageDossiers({
     onglet === "actifs"
       ? dossiers.length
       : (await listDossiers(garage, "actifs")).length;
+  const stats = await statsGarage(garage);
 
   return (
     <div className="space-y-5">
@@ -51,6 +58,8 @@ export default async function PageDossiers({
           Nouveau dossier
         </Link>
       </div>
+
+      <StatsCards stats={stats} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">

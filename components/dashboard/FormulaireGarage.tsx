@@ -116,6 +116,21 @@ export function FormulaireGarage({ garage }: { garage: Garage }) {
             format="png"
           />
         </Champ>
+        <Champ
+          label="Lien avis Google"
+          htmlFor="lien_avis"
+          erreur={err.lien_avis}
+          aide="Proposé au client à la restitution du véhicule, pour laisser un avis. Collez votre lien d'avis Google."
+          className="sm:col-span-2"
+        >
+          <Input
+            id="lien_avis"
+            name="lien_avis"
+            type="url"
+            placeholder="https://g.page/r/…/review"
+            defaultValue={garage.lien_avis ?? ""}
+          />
+        </Champ>
       </div>
 
       {etat.error && (

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarCheck, CalendarDays, MapPin, Phone } from "lucide-react";
+import { CalendarCheck, CalendarDays, MapPin, Phone, Star } from "lucide-react";
 import { LogoIcone } from "@/components/Logo";
 import { Timeline } from "@/components/Timeline";
 import { ChatClient } from "@/components/suivi/ChatClient";
@@ -131,6 +131,33 @@ export default async function PageSuivi({
             </p>
           )}
         </section>
+
+        {/* Demande d'avis après restitution */}
+        {dossier.statut === "livre" && garage.lien_avis && (
+          <section className="rounded-2xl border-2 border-amber-200 bg-amber-50 p-5 text-center shadow-card">
+            <div className="mb-2 flex justify-center gap-1 text-amber-400">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star key={i} className="h-5 w-5 fill-current" />
+              ))}
+            </div>
+            <p className="font-semibold text-ink">
+              Merci d&apos;avoir choisi {garage.nom} !
+            </p>
+            <p className="mx-auto mt-1 max-w-xs text-sm text-slate-600">
+              Votre avis aide beaucoup notre garage. Cela ne prend qu&apos;une
+              minute.
+            </p>
+            <a
+              href={garage.lien_avis}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+            >
+              <Star className="h-4 w-4" />
+              Laisser un avis
+            </a>
+          </section>
+        )}
 
         {/* Devis à valider */}
         {devisEnAttente.map((d) => (

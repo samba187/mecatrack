@@ -193,6 +193,28 @@ async function prochainNumeroDevis(garage: Garage): Promise<string> {
   return `DEV-${annee}-${String((count ?? 0) + 1).padStart(4, "0")}`;
 }
 
+async function prochainNumeroFacture(garage: Garage): Promise<string> {
+  const annee = new Date().getFullYear();
+  if (DEMO_MODE) {
+    const db = demoDb();
+    db.compteurFacture += 1;
+    return `FAC-${annee}-${String(db.compteurFacture).padStart(4, "0")}`;
+  }
+  const dossierIds =
+    (
+      await supabaseAdmin()
+        .from("dossiers")
+        .select("id")
+        .eq("garage_id", garage.id)
+    ).data?.map((d) => d.id) ?? [];
+  const { count } = await supabaseAdmin()
+    .from("devis")
+    .select("id", { count: "exact", head: true })
+    .not("facture_numero", "is", null)
+    .in("dossier_id", dossierIds);
+  return `FAC-${annee}-${String((count ?? 0) + 1).padStart(4, "0")}`;
+}
+
 // ── Garage courant ──────────────────────────────────────────────────────────
 
 export async function getGarageCourant(): Promise<Garage | null> {
@@ -223,6 +245,7 @@ export async function majGarage(
       | "siret"
       | "logo_url"
       | "cachet_url"
+      | "lien_avis"
     >
   >
 ): Promise<void> {
@@ -717,6 +740,8 @@ export async function creerDevis(
     signature_base64: null,
     signature_at: null,
     signe_par: null,
+    facture_numero: null,
+    facture_at: null,
     created_at: new Date().toISOString(),
   };
 
@@ -758,6 +783,128 @@ export async function creerDevis(
     await smsNouveauDevis(garage, dossier);
   }
   return devis;
+}
+
+/** Facture un devis accepté : lui attribue un numéro de facture et une date. */
+export async function creerFacture(
+  garage: Garage,
+  dossierId: string,
+  devisId: string
+): Promise<string> {
+  const maintenant = new Date().toISOString();
+  if (DEMO_MODE) {
+    const db = demoDb();
+    const dossier = db.dossiers.find(
+      (x) => x.id === dossierId && x.garage_id === garage.id
+    );
+    if (!dossier) throw new Error("Dossier introuvable");
+    const devis = db.devis.find((v) => v.id === devisId);
+    if (!devis) throw new Error("Devis introuvable");
+    if (devis.statut !== "accepte")
+      throw new Error("Seul un devis accepté peut être facturé.");
+    if (devis.facture_numero) return devis.facture_numero;
+    devis.facture_numero = await prochainNumeroFacture(garage);
+    devis.facture_at = maintenant;
+    return devis.facture_numero;
+  }
+  const supabase = supabaseServer();
+  const { data } = await supabase
+    .from("devis")
+    .select("*, dossiers!inner(garage_id)")
+    .eq("id", devisId)
+    .eq("dossiers.garage_id", garage.id)
+    .single();
+  const devis = data as (Devis & { dossiers: unknown }) | null;
+  if (!devis) throw new Error("Devis introuvable");
+  if (devis.statut !== "accepte")
+    throw new Error("Seul un devis accepté peut être facturé.");
+  if (devis.facture_numero) return devis.facture_numero;
+  const numero = await prochainNumeroFacture(garage);
+  const { error } = await supabase
+    .from("devis")
+    .update({ facture_numero: numero, facture_at: maintenant })
+    .eq("id", devisId);
+  if (error) throw new Error(error.message);
+  return numero;
+}
+
+/** Relance le client sur un devis encore en attente (renvoie le SMS). */
+export async function relancerDevis(
+  garage: Garage,
+  dossierId: string,
+  devisId: string
+): Promise<void> {
+  const complet = await getDossierComplet(garage, dossierId);
+  if (!complet) throw new Error("Dossier introuvable");
+  const devis = complet.devis.find((v) => v.id === devisId);
+  if (!devis) throw new Error("Devis introuvable");
+  if (devis.statut !== "en_attente")
+    throw new Error("Ce devis a déjà reçu une réponse.");
+  if (peutEnvoyerSms(garage)) {
+    await smsNouveauDevis(garage, complet.dossier);
+  }
+}
+
+// ── Statistiques du tableau de bord ─────────────────────────────────────────
+
+export interface StatsGarage {
+  atelier: number;
+  livresMois: number;
+  caMois: number;
+  tauxAcceptation: number | null; // 0..1, null si aucun devis répondu
+  devisEnAttente: number;
+}
+
+export async function statsGarage(garage: Garage): Promise<StatsGarage> {
+  let dossiers: Dossier[];
+  let devis: Devis[];
+  if (DEMO_MODE) {
+    const db = demoDb();
+    dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
+    const ids = new Set(dossiers.map((d) => d.id));
+    devis = db.devis.filter((v) => ids.has(v.dossier_id));
+  } else {
+    const supabase = supabaseServer();
+    const { data: doss } = await supabase
+      .from("dossiers")
+      .select("*")
+      .eq("garage_id", garage.id);
+    dossiers = (doss ?? []) as Dossier[];
+    const ids = dossiers.map((d) => d.id);
+    if (ids.length === 0) {
+      devis = [];
+    } else {
+      const { data } = await supabase
+        .from("devis")
+        .select("*")
+        .in("dossier_id", ids);
+      devis = (data ?? []) as Devis[];
+    }
+  }
+
+  const now = new Date();
+  const memeMois = (iso: string | null) => {
+    if (!iso) return false;
+    const d = new Date(iso);
+    return (
+      d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth()
+    );
+  };
+
+  const atelier = dossiers.filter((d) => d.statut !== "livre").length;
+  const livresMois = dossiers.filter(
+    (d) => d.statut === "livre" && memeMois(d.date_livraison)
+  ).length;
+  const acceptes = devis.filter((v) => v.statut === "accepte");
+  const refuses = devis.filter((v) => v.statut === "refuse");
+  const caMois = acceptes
+    .filter((v) => memeMois(v.signature_at ?? v.created_at))
+    .reduce((s, v) => s + v.montant_ttc, 0);
+  const repondus = acceptes.length + refuses.length;
+  const tauxAcceptation = repondus > 0 ? acceptes.length / repondus : null;
+  const devisEnAttente = devis.filter((v) => v.statut === "en_attente").length;
+
+  return { atelier, livresMois, caMois, tauxAcceptation, devisEnAttente };
 }
 
 // ── Espace documentaire : tous les devis du garage ──────────────────────────
@@ -902,6 +1049,7 @@ export async function getSuiviParToken(
         telephone_mobile: g.telephone_mobile,
         adresse: g.adresse,
         logo_url: g.logo_url,
+        lien_avis: g.lien_avis,
         plan: g.plan,
       },
       dossier,
@@ -928,7 +1076,7 @@ export async function getSuiviParToken(
   const [garage, photos, devis, messages, historique] = await Promise.all([
     admin
       .from("garages")
-      .select("nom, telephone, telephone_mobile, adresse, logo_url, plan")
+      .select("nom, telephone, telephone_mobile, adresse, logo_url, lien_avis, plan")
       .eq("id", dossier.garage_id)
       .single(),
     admin

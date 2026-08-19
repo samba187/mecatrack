@@ -1,18 +1,26 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 import Link from "next/link";
 import {
   AlertCircle,
+  Check,
   CheckCircle2,
   Clock,
   Plus,
   Printer,
+  Receipt,
+  RefreshCw,
   Trash2,
   XCircle,
 } from "lucide-react";
-import { actionCreerDevis, type EtatFormulaire } from "@/app/dashboard/actions";
+import {
+  actionCreerDevis,
+  actionCreerFacture,
+  actionRelancerDevis,
+  type EtatFormulaire,
+} from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/Button";
 import { Champ, Input } from "@/components/ui/Input";
 import { Modal } from "@/components/ui/Modal";
@@ -240,8 +248,74 @@ const STATUT_DEVIS = {
   },
 };
 
+function joursDepuis(iso: string): number {
+  return Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000);
+}
+
+function BoutonFacture({
+  dossierId,
+  devisId,
+}: {
+  dossierId: string;
+  devisId: string;
+}) {
+  const [enCours, demarrer] = useTransition();
+  return (
+    <button
+      type="button"
+      disabled={enCours}
+      onClick={() =>
+        demarrer(async () => {
+          await actionCreerFacture(dossierId, devisId);
+        })
+      }
+      className="inline-flex items-center gap-1.5 rounded-lg bg-primary-800 px-2.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-primary-700 disabled:opacity-60"
+    >
+      <Receipt className="h-3.5 w-3.5" />
+      {enCours ? "Génération…" : "Générer la facture"}
+    </button>
+  );
+}
+
+function BoutonRelance({
+  dossierId,
+  devisId,
+}: {
+  dossierId: string;
+  devisId: string;
+}) {
+  const [enCours, demarrer] = useTransition();
+  const [fait, setFait] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={enCours || fait}
+      onClick={() =>
+        demarrer(async () => {
+          await actionRelancerDevis(dossierId, devisId);
+          setFait(true);
+        })
+      }
+      className="inline-flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-800 transition-colors hover:bg-amber-100 disabled:opacity-70"
+    >
+      {fait ? (
+        <>
+          <Check className="h-3.5 w-3.5" /> Relance envoyée
+        </>
+      ) : (
+        <>
+          <RefreshCw className="h-3.5 w-3.5" />
+          {enCours ? "Envoi…" : "Relancer le client"}
+        </>
+      )}
+    </button>
+  );
+}
+
 function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
   const s = STATUT_DEVIS[devis.statut];
+  const attenteJours =
+    devis.statut === "en_attente" ? joursDepuis(devis.created_at) : 0;
   return (
     <div className="rounded-lg border border-slate-200 p-4">
       <div className="flex flex-wrap items-start justify-between gap-2">
@@ -285,8 +359,13 @@ function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
           {devis.statut === "accepte" && devis.signe_par && (
             <> · signé par {devis.signe_par}</>
           )}
+          {attenteJours >= 2 && (
+            <span className="ml-1 font-medium text-amber-700">
+              · en attente depuis {attenteJours} j
+            </span>
+          )}
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2">
           <span className="font-mono text-base font-bold text-primary-900">
             {formatEuros(devis.montant_ttc)}
             <span className="ml-1 text-xs font-normal text-slate-400">TTC</span>
@@ -297,8 +376,24 @@ function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-primary-300 hover:text-primary-700"
           >
             <Printer className="h-3.5 w-3.5" />
-            PDF
+            Devis PDF
           </Link>
+          {devis.statut === "en_attente" && (
+            <BoutonRelance dossierId={dossierId} devisId={devis.id} />
+          )}
+          {devis.statut === "accepte" &&
+            (devis.facture_numero ? (
+              <Link
+                href={`/impression/facture/${dossierId}/${devis.id}`}
+                target="_blank"
+                className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-800 transition-colors hover:bg-green-100"
+              >
+                <Receipt className="h-3.5 w-3.5" />
+                Facture {devis.facture_numero}
+              </Link>
+            ) : (
+              <BoutonFacture dossierId={dossierId} devisId={devis.id} />
+            ))}
         </div>
       </div>
     </div>

@@ -122,6 +122,12 @@ export const schemaGarage = z.object({
     .transform((v) => (v === "" ? null : v)),
   logo_url: imageOptionnelle,
   cachet_url: imageOptionnelle,
+  lien_avis: z
+    .string()
+    .trim()
+    .url("Lien invalide (doit commencer par https://)")
+    .or(z.literal(""))
+    .transform((v) => (v === "" ? null : v)),
 });
 
 export const schemaInscription = z.object({

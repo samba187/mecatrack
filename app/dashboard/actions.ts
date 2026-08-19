@@ -7,6 +7,7 @@ import {
   changerStatut,
   creerDevis,
   creerDossier,
+  creerFacture,
   creerPrestation,
   envoyerMessageGarage,
   getGarageCourant,
@@ -15,6 +16,7 @@ import {
   majPhoto,
   marquerMessagesLus,
   marquerNotificationsLues,
+  relancerDevis,
   supprimerPhoto,
   supprimerPrestation,
 } from "@/lib/db";
@@ -193,6 +195,34 @@ export async function actionCreerDevis(
   revalidatePath(`/dashboard/dossiers/${dossierId}`);
   revalidatePath("/dashboard/dossiers");
   revalidatePath("/dashboard/devis");
+  return { ok: true };
+}
+
+export async function actionCreerFacture(
+  dossierId: string,
+  devisId: string
+): Promise<EtatFormulaire> {
+  const garage = await garageOuErreur();
+  try {
+    await creerFacture(garage, dossierId, devisId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Facturation impossible." };
+  }
+  revalidatePath(`/dashboard/dossiers/${dossierId}`);
+  revalidatePath("/dashboard/factures");
+  return { ok: true };
+}
+
+export async function actionRelancerDevis(
+  dossierId: string,
+  devisId: string
+): Promise<EtatFormulaire> {
+  const garage = await garageOuErreur();
+  try {
+    await relancerDevis(garage, dossierId, devisId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Relance impossible." };
+  }
   return { ok: true };
 }
 

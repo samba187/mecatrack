@@ -13,6 +13,7 @@ create table public.garages (
   email text,
   logo_url text,   -- data URL (image redimensionnée) ou chemin storage
   cachet_url text, -- cachet/signature scanné du garage (data URL)
+  lien_avis text,  -- URL d'avis (Google) proposée au client à la livraison
   siret text,
   stripe_customer_id text,
   stripe_subscription_id text,
@@ -24,6 +25,7 @@ create unique index garages_user_id_idx on public.garages(user_id);
 -- Colonnes ajoutées après coup (sûr à ré-exécuter sur une base existante)
 alter table public.garages add column if not exists telephone_mobile text;
 alter table public.garages add column if not exists cachet_url text;
+alter table public.garages add column if not exists lien_avis text;
 
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),
@@ -74,9 +76,13 @@ create table public.devis (
   signature_base64 text,
   signature_at timestamptz,
   signe_par text,
+  facture_numero text,       -- rempli quand le devis accepté est facturé
+  facture_at timestamptz,
   created_at timestamptz not null default now()
 );
 create index devis_dossier_id_idx on public.devis(dossier_id);
+alter table public.devis add column if not exists facture_numero text;
+alter table public.devis add column if not exists facture_at timestamptz;
 
 create table public.messages (
   id uuid primary key default gen_random_uuid(),

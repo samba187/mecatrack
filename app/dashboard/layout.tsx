@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileText, FolderOpen, Settings, Tag } from "lucide-react";
+import { FileText, FolderOpen, Receipt, Settings, Tag } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { DeconnexionBouton } from "@/components/dashboard/DeconnexionBouton";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
@@ -16,6 +16,7 @@ import { DEMO_MODE } from "@/lib/config";
 const LIENS = [
   { href: "/dashboard/dossiers", label: "Dossiers", icone: FolderOpen },
   { href: "/dashboard/devis", label: "Devis", icone: FileText },
+  { href: "/dashboard/factures", label: "Factures", icone: Receipt },
   { href: "/dashboard/prestations", label: "Prestations", icone: Tag },
   { href: "/dashboard/compte", label: "Compte", icone: Settings },
 ];

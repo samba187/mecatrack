@@ -27,6 +27,7 @@ export interface Garage {
   email: string | null;
   logo_url: string | null;
   cachet_url: string | null;
+  lien_avis: string | null;
   siret: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
@@ -92,6 +93,8 @@ export interface Devis {
   signature_base64: string | null;
   signature_at: string | null;
   signe_par: string | null;
+  facture_numero: string | null;
+  facture_at: string | null;
   created_at: string;
 }
 
@@ -142,7 +145,13 @@ export interface DossierComplet {
 export interface SuiviPublic {
   garage: Pick<
     Garage,
-    "nom" | "telephone" | "telephone_mobile" | "adresse" | "logo_url" | "plan"
+    | "nom"
+    | "telephone"
+    | "telephone_mobile"
+    | "adresse"
+    | "logo_url"
+    | "lien_avis"
+    | "plan"
   >;
   dossier: Dossier;
   photos: Photo[];

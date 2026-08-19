@@ -22,6 +22,7 @@ interface DemoDb {
   prestations: Prestation[];
   notifications: Notification[];
   compteurDevis: number;
+  compteurFacture: number;
 }
 
 function ilYa(jours: number, heures = 0): string {
@@ -45,6 +46,7 @@ function seed(): DemoDb {
     email: "contact@garage-lemoine.fr",
     logo_url: null,
     cachet_url: null,
+    lien_avis: "https://g.page/r/exemple-garage-lemoine/review",
     siret: "812 456 789 00023",
     stripe_customer_id: null,
     stripe_subscription_id: null,
@@ -162,6 +164,8 @@ function seed(): DemoDb {
       signature_base64: null,
       signature_at: ilYa(2, 2),
       signe_par: "Karim Benaïssa",
+      facture_numero: null,
+      facture_at: null,
       created_at: ilYa(2, 3),
     },
     {
@@ -182,6 +186,8 @@ function seed(): DemoDb {
       signature_base64: null,
       signature_at: null,
       signe_par: null,
+      facture_numero: null,
+      facture_at: null,
       created_at: ilYa(0, 4),
     }
   );
@@ -288,6 +294,8 @@ function seed(): DemoDb {
     signature_base64: null,
     signature_at: ilYa(2, 14),
     signe_par: "Antoine Perrot",
+    facture_numero: "FAC-2026-0006",
+    facture_at: ilYa(3, 6),
     created_at: ilYa(3, 8),
   });
   photos.push(
@@ -392,6 +400,8 @@ function seed(): DemoDb {
     signature_base64: null,
     signature_at: ilYa(6, 22),
     signe_par: "Nadia Belkacem",
+    facture_numero: null,
+    facture_at: null,
     created_at: ilYa(7),
   });
 
@@ -448,6 +458,7 @@ function seed(): DemoDb {
     prestations,
     notifications,
     compteurDevis: 34,
+    compteurFacture: 6,
   };
 }
 

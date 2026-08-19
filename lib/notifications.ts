@@ -79,6 +79,9 @@ export async function smsChangementStatut(
     en_cours: `${garage.nom} : la réparation de votre ${vehicule} a commencé. Suivi : ${lien}`,
     en_attente_validation: `${garage.nom} : une intervention supplémentaire nécessite votre accord pour votre ${vehicule}. Validez ou refusez ici : ${lien}`,
     pret: `Bonne nouvelle ! Votre ${vehicule} est prête. Vous pouvez venir la récupérer chez ${garage.nom}. Détails : ${lien}`,
+    livre: garage.lien_avis
+      ? `Merci d'avoir choisi ${garage.nom} pour votre ${vehicule} ! Votre avis nous aide beaucoup : ${garage.lien_avis}`
+      : `Merci d'avoir choisi ${garage.nom} pour votre ${vehicule} ! À bientôt.`,
   };
   const message = corps[statut];
   if (message) await envoyerSms(dossier.client_telephone, message);
