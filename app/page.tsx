@@ -86,11 +86,11 @@ function Hero() {
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                href="/suivi/demo"
+                href="/demo"
                 className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 text-base font-medium text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-400"
               >
                 <MonitorSmartphone className="h-4 w-4" />
-                Voir la page vue par le client
+                Explorer la démo
               </Link>
             </div>
           </Reveal>
@@ -521,10 +521,10 @@ function CtaFinal() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
             </Link>
             <Link
-              href="/suivi/demo"
+              href="/demo"
               className="inline-flex h-12 items-center rounded-xl border border-white/25 px-7 text-base font-medium text-white transition-all hover:-translate-y-0.5 hover:bg-white/10"
             >
-              Voir la démo
+              Explorer la démo
             </Link>
           </div>
           <p className="mt-4 text-sm text-primary-300">
@@ -545,7 +545,7 @@ function PiedDePage() {
           <a href="#tarifs" className="transition-colors hover:text-primary-800">
             Tarifs
           </a>
-          <Link href="/suivi/demo" className="transition-colors hover:text-primary-800">
+          <Link href="/demo" className="transition-colors hover:text-primary-800">
             Démo
           </Link>
           <Link href="/cgu" className="transition-colors hover:text-primary-800">

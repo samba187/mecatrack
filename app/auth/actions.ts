@@ -1,7 +1,8 @@
 "use server";
 
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { DEMO_MODE, APP_URL } from "@/lib/config";
+import { COOKIE_DEMO, DEMO_MODE, APP_URL } from "@/lib/config";
 import { DUREE_ESSAI_JOURS } from "@/lib/plans";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { schemaConnexion, schemaInscription } from "@/lib/validation";
@@ -12,6 +13,15 @@ export interface EtatAuth {
   error?: string;
   ok?: boolean;
   info?: string;
+}
+
+// Quitte une éventuelle session de démonstration lors d'une vraie connexion.
+function quitterDemo() {
+  try {
+    cookies().set(COOKIE_DEMO, "", { path: "/", maxAge: 0 });
+  } catch {
+    /* pas de contexte cookie : rien à faire */
+  }
 }
 
 export async function actionConnexion(
@@ -28,6 +38,7 @@ export async function actionConnexion(
   const supabase = supabaseServer();
   const { error } = await supabase.auth.signInWithPassword(parsed.data);
   if (error) return { error: "Email ou mot de passe incorrect." };
+  quitterDemo();
   redirect("/dashboard/dossiers");
 }
 
@@ -77,6 +88,7 @@ export async function actionInscription(
   if (errGarage) return { error: "Erreur lors de la création du compte garage." };
 
   await emailBienvenue(garage as Garage, `${APP_URL}/dashboard/dossiers/new`);
+  quitterDemo();
   redirect("/dashboard/dossiers?bienvenue=1");
 }
 

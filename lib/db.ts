@@ -1,6 +1,6 @@
 import "server-only";
 import { randomUUID } from "crypto";
-import { DEMO_MODE, APP_URL } from "./config";
+import { estDemo, APP_URL } from "./config";
 import { demoDb } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
 import { maxPhotosParDossier, peutCreerDossier, peutEnvoyerSms } from "./plans";
@@ -41,7 +41,7 @@ async function creerNotification(
   titre: string,
   corps: string
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     demoDb().notifications.unshift({
       id: randomUUID(),
       garage_id: garage.id,
@@ -67,7 +67,7 @@ export async function listNotifications(
   garage: Garage,
   limite = 30
 ): Promise<Notification[]> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     return demoDb()
       .notifications.filter((n) => n.garage_id === garage.id)
       .slice(0, limite);
@@ -84,7 +84,7 @@ export async function listNotifications(
 export async function compteNotificationsNonLues(
   garage: Garage
 ): Promise<number> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     return demoDb().notifications.filter(
       (n) => n.garage_id === garage.id && !n.lu
     ).length;
@@ -98,7 +98,7 @@ export async function compteNotificationsNonLues(
 }
 
 export async function marquerNotificationsLues(garage: Garage): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     demoDb()
       .notifications.filter((n) => n.garage_id === garage.id)
       .forEach((n) => (n.lu = true));
@@ -114,7 +114,7 @@ export async function marquerNotificationsLues(garage: Garage): Promise<void> {
 // ── Prestations (catalogue réutilisable) ────────────────────────────────────
 
 export async function listPrestations(garage: Garage): Promise<Prestation[]> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     return demoDb()
       .prestations.filter((p) => p.garage_id === garage.id)
       .sort((a, b) => a.designation.localeCompare(b.designation, "fr"));
@@ -137,7 +137,7 @@ export async function creerPrestation(
     designation: input.designation,
     prix_ht: input.prix_ht,
   };
-  if (DEMO_MODE) {
+  if (estDemo()) {
     demoDb().prestations.push(prestation);
     return prestation;
   }
@@ -159,7 +159,7 @@ export async function supprimerPrestation(
   garage: Garage,
   prestationId: string
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     db.prestations = db.prestations.filter((p) => p.id !== prestationId);
     return;
@@ -173,7 +173,7 @@ export async function supprimerPrestation(
 
 async function prochainNumeroDevis(garage: Garage): Promise<string> {
   const annee = new Date().getFullYear();
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     db.compteurDevis += 1;
     return `DEV-${annee}-${String(db.compteurDevis).padStart(4, "0")}`;
@@ -195,7 +195,7 @@ async function prochainNumeroDevis(garage: Garage): Promise<string> {
 
 async function prochainNumeroFacture(garage: Garage): Promise<string> {
   const annee = new Date().getFullYear();
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     db.compteurFacture += 1;
     return `FAC-${annee}-${String(db.compteurFacture).padStart(4, "0")}`;
@@ -218,7 +218,7 @@ async function prochainNumeroFacture(garage: Garage): Promise<string> {
 // ── Garage courant ──────────────────────────────────────────────────────────
 
 export async function getGarageCourant(): Promise<Garage | null> {
-  if (DEMO_MODE) return demoDb().garage;
+  if (estDemo()) return demoDb().garage;
   const supabase = supabaseServer();
   const {
     data: { user },
@@ -249,7 +249,7 @@ export async function majGarage(
     >
   >
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     Object.assign(demoDb().garage, patch);
     return;
   }
@@ -275,7 +275,7 @@ export async function listDossiers(
   let devis: Devis[];
   let messages: Message[];
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     photos = db.photos;
@@ -357,7 +357,7 @@ export async function getDossierComplet(
   garage: Garage,
   dossierId: string
 ): Promise<DossierComplet | null> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const dossier = db.dossiers.find(
       (d) => d.id === dossierId && d.garage_id === garage.id
@@ -457,7 +457,7 @@ export async function creerDossier(
     ...input,
   };
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     db.dossiers.push(dossier);
     db.historique.push({
@@ -506,7 +506,7 @@ export async function majDossier(
     >
   >
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const d = demoDb().dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
     );
@@ -531,7 +531,7 @@ export async function changerStatut(
   let dossier: Dossier | null = null;
   const maintenant = new Date().toISOString();
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossier =
       db.dossiers.find(
@@ -595,7 +595,7 @@ export async function ajouterPhoto(
 ): Promise<Photo> {
   const max = maxPhotosParDossier(garage);
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
@@ -672,7 +672,7 @@ export async function majPhoto(
   photoId: string,
   patch: Partial<Pick<Photo, "legende" | "visible_client">>
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const photo = db.photos.find((p) => p.id === photoId);
     if (!photo) throw new Error("Photo introuvable");
@@ -691,7 +691,7 @@ export async function supprimerPhoto(
   garage: Garage,
   photoId: string
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     db.photos = db.photos.filter((p) => p.id !== photoId);
     return;
@@ -746,7 +746,7 @@ export async function creerDevis(
   };
 
   let dossier: Dossier | null = null;
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossier =
       db.dossiers.find(
@@ -792,7 +792,7 @@ export async function creerFacture(
   devisId: string
 ): Promise<string> {
   const maintenant = new Date().toISOString();
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
@@ -858,7 +858,7 @@ export interface StatsGarage {
 export async function statsGarage(garage: Garage): Promise<StatsGarage> {
   let dossiers: Dossier[];
   let devis: Devis[];
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     const ids = new Set(dossiers.map((d) => d.id));
@@ -921,7 +921,7 @@ export async function listTousDevis(
 ): Promise<DevisAvecContexte[]> {
   let devis: Devis[];
   let dossiers: Dossier[];
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     const ids = new Set(dossiers.map((d) => d.id));
@@ -991,7 +991,7 @@ export async function envoyerMessageGarage(
     lu: true,
     created_at: new Date().toISOString(),
   };
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
@@ -1016,7 +1016,7 @@ export async function marquerMessagesLus(
   garage: Garage,
   dossierId: string
 ): Promise<void> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     demoDb()
       .messages.filter(
         (m) => m.dossier_id === dossierId && m.auteur === "client"
@@ -1037,7 +1037,7 @@ export async function marquerMessagesLus(
 export async function getSuiviParToken(
   token: string
 ): Promise<SuiviPublic | null> {
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const dossier = db.dossiers.find((d) => d.token_public === token);
     if (!dossier) return null;
@@ -1112,7 +1112,7 @@ export async function getSuiviParToken(
 }
 
 async function garagePourDossier(dossier: Dossier): Promise<Garage | null> {
-  if (DEMO_MODE) return demoDb().garage;
+  if (estDemo()) return demoDb().garage;
   const { data } = await supabaseAdmin()
     .from("garages")
     .select("*")
@@ -1132,7 +1132,7 @@ export async function repondreDevis(
   let dossier: Dossier;
   let devis: Devis;
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     const d = db.dossiers.find((x) => x.token_public === token);
     const v = db.devis.find((x) => x.id === devisId);
@@ -1217,7 +1217,7 @@ export async function envoyerMessageClient(
     created_at: new Date().toISOString(),
   };
 
-  if (DEMO_MODE) {
+  if (estDemo()) {
     const db = demoDb();
     dossier = db.dossiers.find((d) => d.token_public === token) ?? null;
     if (!dossier) throw new Error("Dossier introuvable");

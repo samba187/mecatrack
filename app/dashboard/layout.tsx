@@ -11,7 +11,7 @@ import {
 } from "@/lib/db";
 import { planEffectif } from "@/lib/plans";
 import { joursRestants } from "@/lib/utils";
-import { DEMO_MODE } from "@/lib/config";
+import { DEMO_MODE, estDemo } from "@/lib/config";
 
 const LIENS = [
   { href: "/dashboard/dossiers", label: "Dossiers", icone: FolderOpen },
@@ -80,9 +80,27 @@ export default async function DashboardLayout({
         </nav>
       </header>
 
-      {DEMO_MODE && (
-        <div className="border-b border-primary-100 bg-primary-50 px-4 py-2 text-center text-sm text-primary-800">
-          Mode démonstration — les données sont fictives et réinitialisées au redémarrage.
+      {estDemo() && (
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-b border-primary-100 bg-primary-50 px-4 py-2 text-center text-sm text-primary-800">
+          <span>
+            <strong>Démonstration</strong> — vous explorez un garage fictif.
+          </span>
+          {!DEMO_MODE && (
+            <span className="flex items-center gap-3">
+              <Link
+                href="/auth/register"
+                className="rounded-md bg-primary-800 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-primary-700"
+              >
+                Créer mon compte gratuit
+              </Link>
+              <Link
+                href="/demo/quitter"
+                className="text-xs font-medium underline underline-offset-2 hover:text-primary-900"
+              >
+                Quitter la démo
+              </Link>
+            </span>
+          )}
         </div>
       )}
 
