@@ -70,14 +70,30 @@ export function FormulaireInscription() {
       <Champ label="Nom du garage" htmlFor="nom_garage" obligatoire>
         <Input id="nom_garage" name="nom_garage" placeholder="Garage Martin" required autoFocus />
       </Champ>
+      <Champ
+        label="SIRET"
+        htmlFor="siret"
+        obligatoire
+        aide="14 chiffres. Vérifié auprès du registre officiel des entreprises."
+      >
+        <Input
+          id="siret"
+          name="siret"
+          inputMode="numeric"
+          placeholder="123 456 789 00012"
+          className="font-mono"
+          maxLength={17}
+          required
+        />
+      </Champ>
+      <Champ label="Téléphone du garage" htmlFor="telephone" obligatoire>
+        <Input id="telephone" name="telephone" type="tel" placeholder="01 23 45 67 89" required />
+      </Champ>
       <Champ label="Email professionnel" htmlFor="email" obligatoire>
         <Input id="email" name="email" type="email" autoComplete="email" placeholder="contact@garage-martin.fr" required />
       </Champ>
       <Champ label="Mot de passe" htmlFor="password" obligatoire aide="8 caractères minimum">
         <Input id="password" name="password" type="password" autoComplete="new-password" minLength={8} required />
-      </Champ>
-      <Champ label="Téléphone du garage" htmlFor="telephone">
-        <Input id="telephone" name="telephone" type="tel" placeholder="01 23 45 67 89" />
       </Champ>
       <label className="flex items-start gap-2.5 text-sm text-slate-600">
         <input

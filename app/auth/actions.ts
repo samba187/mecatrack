@@ -6,6 +6,7 @@ import { COOKIE_DEMO, DEMO_MODE, APP_URL } from "@/lib/config";
 import { DUREE_ESSAI_JOURS } from "@/lib/plans";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { schemaConnexion, schemaInscription } from "@/lib/validation";
+import { verifierSiret } from "@/lib/siret";
 import { emailBienvenue } from "@/lib/notifications";
 import type { Garage } from "@/lib/types";
 
@@ -57,7 +58,13 @@ export async function actionInscription(
         parsed.error.issues[0]?.message ?? "Certains champs sont invalides.",
     };
   }
-  const { nom_garage, email, password, telephone } = parsed.data;
+  const { nom_garage, siret, email, password, telephone } = parsed.data;
+
+  // Vérifie que le SIRET correspond à une entreprise réellement immatriculée.
+  const verif = await verifierSiret(siret);
+  if (!verif.ok) {
+    return { error: verif.erreur ?? "SIRET invalide." };
+  }
 
   const supabase = supabaseServer();
   const { data, error } = await supabase.auth.signUp({
@@ -78,6 +85,7 @@ export async function actionInscription(
     .insert({
       user_id: data.user.id,
       nom: nom_garage,
+      siret,
       email,
       telephone,
       plan: "trial",
@@ -86,6 +94,14 @@ export async function actionInscription(
     .select()
     .single();
   if (errGarage) return { error: "Erreur lors de la création du compte garage." };
+
+  // Confirmation d'email requise (aucune session ouverte) : on invite le
+  // garagiste à valider son adresse avant de pouvoir se connecter.
+  if (!data.session) {
+    return {
+      info: `Compte créé pour ${nom_garage}. Un email de confirmation vient d'être envoyé à ${email} : cliquez sur le lien pour activer votre compte, puis connectez-vous.`,
+    };
+  }
 
   await emailBienvenue(garage as Garage, `${APP_URL}/dashboard/dossiers/new`);
   quitterDemo();

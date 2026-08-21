@@ -132,9 +132,24 @@ export const schemaGarage = z.object({
 
 export const schemaInscription = z.object({
   nom_garage: z.string().trim().min(2, "Le nom du garage est obligatoire"),
+  siret: z
+    .string()
+    .trim()
+    .refine(
+      (v) => /^\d{14}$/.test(v.replace(/\D/g, "")),
+      "Le SIRET doit contenir 14 chiffres"
+    )
+    .transform((v) => v.replace(/\D/g, "")),
   email: z.string().trim().email("Email invalide"),
   password: z.string().min(8, "8 caractères minimum"),
-  telephone: telephone,
+  telephone: z
+    .string()
+    .trim()
+    .min(1, "Le téléphone est obligatoire")
+    .regex(
+      /^(\+33|0)[1-9]([ .\-]?\d{2}){4}$/,
+      "Numéro de téléphone invalide"
+    ),
   cgu: z.literal("on", { error: "Vous devez accepter les CGU" }),
 });
 
