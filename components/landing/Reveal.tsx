@@ -25,6 +25,15 @@ export function Reveal({
     const el = ref.current;
     if (!el) return;
 
+    // Respecte la préférence système « animations réduites » : contenu direct.
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+    ) {
+      setVisible(true);
+      return;
+    }
+
     let fait = false;
     const montre = () => {
       if (!fait) {
