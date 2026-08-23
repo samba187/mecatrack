@@ -2,12 +2,8 @@
 
 import { useRef } from "react";
 import { Check } from "lucide-react";
-import {
-  BrowserFrame,
-  DashboardMock,
-  PhoneMock,
-  SignatureMock,
-} from "./Mockups";
+import { BrowserFrame, DashboardMock, SignatureMock } from "./Mockups";
+import { PhoneMockLive } from "./PhoneMockLive";
 
 /**
  * Composition produit en profondeur : plusieurs cartes flottantes avec
@@ -88,7 +84,7 @@ export function HeroVisual() {
             className="animate-float"
             style={{ animationDuration: "8s", animationDelay: "-3s" }}
           >
-            <PhoneMock />
+            <PhoneMockLive />
           </div>
         </div>
 

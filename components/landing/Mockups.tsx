@@ -215,6 +215,7 @@ export function SignatureMock() {
         <div className="relative flex h-16 items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-surface">
           <svg viewBox="0 0 160 40" className="h-9 w-40 text-primary-800">
             <path
+              className="animate-sign"
               d="M8 28 C 20 6, 28 6, 34 22 S 48 34, 56 16 68 8, 76 24 90 30, 100 14 116 8, 124 26 138 30, 152 14"
               fill="none"
               stroke="currentColor"

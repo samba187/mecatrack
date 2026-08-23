@@ -67,6 +67,38 @@
   .text-balance {
     text-wrap: balance;
   }
+
+  /* Changement de statut (mini screencast du hero) */
+  @keyframes fadeSwap {
+    from {
+      opacity: 0;
+      transform: translateY(3px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+
+  /* Signature qui se trace puis s'efface, en boucle */
+  @keyframes signDraw {
+    0% {
+      stroke-dashoffset: 300;
+    }
+    40% {
+      stroke-dashoffset: 0;
+    }
+    70% {
+      stroke-dashoffset: 0;
+    }
+    100% {
+      stroke-dashoffset: 300;
+    }
+  }
+  .animate-sign {
+    stroke-dasharray: 300;
+    animation: signDraw 5s ease-in-out infinite;
+  }
 }
 
 @media print {
@@ -100,7 +132,11 @@
   .animate-float,
   .animate-sweep,
   .animate-glow-pulse,
-  .animate-shimmer {
+  .animate-shimmer,
+  .animate-sign {
     animation: none !important;
+  }
+  .animate-sign {
+    stroke-dashoffset: 0 !important;
   }
 }
