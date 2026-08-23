@@ -128,6 +128,12 @@ export const schemaGarage = z.object({
     .url("Lien invalide (doit commencer par https://)")
     .or(z.literal(""))
     .transform((v) => (v === "" ? null : v)),
+  tva_defaut: z.preprocess(
+    (v) => (v === "" || v == null ? null : Number(v)),
+    z.number().min(0).max(100).nullable().catch(null)
+  ),
+  conditions_paiement: optionnel,
+  mentions_devis: optionnel,
 });
 
 export const schemaInscription = z.object({

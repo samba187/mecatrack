@@ -95,6 +95,49 @@ export async function smsNouveauDevis(garage: Garage, dossier: Dossier) {
   );
 }
 
+// ── Envoi d'un devis / d'une facture au client ──────────────────────────────
+
+export async function smsDocument(
+  garage: Garage,
+  dossier: Dossier,
+  devis: Devis,
+  lien: string
+) {
+  if (!dossier.client_telephone) return;
+  const facture = Boolean(devis.facture_numero);
+  const quoi = facture
+    ? `votre facture ${devis.facture_numero}`
+    : `votre devis ${devis.numero}`;
+  await envoyerSms(
+    dossier.client_telephone,
+    `${garage.nom} : ${quoi} pour votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} est disponible ici : ${lien}`
+  );
+}
+
+export async function emailDocument(
+  garage: Garage,
+  dossier: Dossier,
+  devis: Devis,
+  lien: string
+) {
+  if (!dossier.client_email) return;
+  const facture = Boolean(devis.facture_numero);
+  const titre = facture
+    ? `Facture ${devis.facture_numero}`
+    : `Devis ${devis.numero}`;
+  await envoyerEmail(
+    dossier.client_email,
+    `${titre} — ${garage.nom}`,
+    gabarit(
+      `${titre} pour votre ${dossier.vehicule_marque}`,
+      `<p>Bonjour ${dossier.client_nom},</p>
+       <p>${garage.nom} vous transmet ${facture ? "votre facture" : "votre devis"} d'un montant de <strong>${devis.montant_ttc.toFixed(2).replace(".", ",")} &euro; TTC</strong> pour votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} (${dossier.vehicule_immat}).</p>
+       <p>Vous pouvez le consulter, l'imprimer ou l'enregistrer en PDF depuis le lien ci-dessous.</p>`,
+      { label: facture ? "Voir ma facture" : "Voir mon devis", url: lien }
+    )
+  );
+}
+
 // ── SMS vers le garage (le patron doit savoir tout de suite) ────────────────
 
 export async function smsGarageDevisRepondu(

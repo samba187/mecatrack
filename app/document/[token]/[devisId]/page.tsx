@@ -1,7 +1,9 @@
-import { notFound, redirect } from "next/navigation";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import { PenLine } from "lucide-react";
 import { Cachet } from "@/components/dashboard/Cachet";
 import { PrintBar } from "@/components/dashboard/PrintButton";
-import { getDevisPourImpression, getGarageCourant } from "@/lib/db";
+import { getDocumentParToken } from "@/lib/db";
 import {
   formatDate,
   formatDateTime,
@@ -10,27 +12,47 @@ import {
 } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Facture" };
+export const metadata = {
+  title: "Votre document",
+  robots: { index: false, follow: false },
+};
 
-export default async function PageImpressionFacture({
+export default async function PageDocumentClient({
   params,
 }: {
-  params: { dossierId: string; devisId: string };
+  params: { token: string; devisId: string };
 }) {
-  const garage = await getGarageCourant();
-  if (!garage) redirect("/auth/login");
-
-  const res = await getDevisPourImpression(garage, params.dossierId, params.devisId);
+  const res = await getDocumentParToken(params.token, params.devisId);
   if (!res) notFound();
-  const { devis, dossier } = res;
-  // Une facture n'existe que pour un devis accepté et facturé.
-  if (!devis.facture_numero) notFound();
+  const { garage, dossier, devis } = res;
+  const facture = Boolean(devis.facture_numero);
+  const signe = devis.statut === "accepte";
+  const aValider = devis.statut === "en_attente";
+  const dateDoc = facture ? devis.facture_at ?? devis.created_at : devis.created_at;
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <PrintBar retour={`/dashboard/dossiers/${params.dossierId}`} />
+      <PrintBar
+        retour={`/suivi/${params.token}`}
+        retourLabel="Retour au suivi"
+      />
 
       <div className="mx-auto max-w-3xl px-4 py-8">
+        {aValider && (
+          <div className="no-print mb-6 flex flex-col items-center gap-3 rounded-xl border-2 border-amber-200 bg-amber-50 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
+            <p className="text-sm font-medium text-amber-900">
+              Ce devis attend votre accord pour lancer les travaux.
+            </p>
+            <Link
+              href={`/suivi/${params.token}`}
+              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+            >
+              <PenLine className="h-4 w-4" />
+              Valider et signer
+            </Link>
+          </div>
+        )}
+
         <div className="print-sheet rounded-lg bg-white p-10 shadow-card">
           {/* En-tête */}
           <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
@@ -56,20 +78,21 @@ export default async function PageImpressionFacture({
             </div>
             <div className="text-right">
               <p className="text-xl font-bold uppercase tracking-wide text-slate-800">
-                Facture
+                {facture ? "Facture" : "Devis"}
               </p>
               <p className="mt-1 font-mono text-sm font-semibold text-primary-800">
-                {devis.facture_numero}
+                {facture ? devis.facture_numero : devis.numero}
               </p>
-              <p className="mt-1 text-sm text-slate-500">
-                {formatDate(devis.facture_at ?? devis.created_at)}
-              </p>
-              <span className="mt-2 inline-block rounded border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                Acquittée
-              </span>
-              <p className="mt-1 font-mono text-[11px] text-slate-400">
-                réf. devis {devis.numero}
-              </p>
+              <p className="mt-1 text-sm text-slate-500">{formatDate(dateDoc)}</p>
+              {facture ? (
+                <span className="mt-2 inline-block rounded border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  Acquittée
+                </span>
+              ) : (
+                <span className="mt-2 inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+                  {devis.type === "initial" ? "Devis d'entrée" : "Devis supplémentaire"}
+                </span>
+              )}
             </div>
           </div>
 
@@ -156,19 +179,14 @@ export default async function PageImpressionFacture({
 
           {/* Pied : mentions, cachet */}
           <div className="mt-8 flex items-end justify-between gap-6 border-t border-slate-200 pt-6">
-            <div className="max-w-xs text-xs leading-relaxed text-slate-400">
+            <div className="max-w-xs space-y-1 text-xs leading-relaxed text-slate-400">
               <p>
-                Facture acquittée. Devis {devis.numero} accepté et signé
-                {devis.signe_par ? ` par ${devis.signe_par}` : ""}
-                {devis.signature_at ? ` le ${formatDate(devis.signature_at)}` : ""}.
-              </p>
-              {garage.conditions_paiement && (
-                <p className="mt-1">{garage.conditions_paiement}</p>
-              )}
-              <p className="mt-1">
                 {garage.mentions_devis ??
-                  "TVA non applicable, art. 293 B du CGI le cas échéant."}{" "}
-                Document généré via Mécatrack le {formatDateTime(devis.facture_at ?? devis.created_at)}.
+                  "Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant."}
+              </p>
+              {garage.conditions_paiement && <p>{garage.conditions_paiement}</p>}
+              <p>
+                Document généré via Mécatrack le {formatDateTime(dateDoc)}.
               </p>
             </div>
             <div className="flex items-end gap-4">
@@ -180,9 +198,33 @@ export default async function PageImpressionFacture({
                   className="h-24 w-auto max-w-[150px] object-contain"
                 />
               )}
-              <Cachet garage={garage} date={devis.facture_at ?? devis.created_at} />
+              <Cachet garage={garage} date={dateDoc} />
             </div>
           </div>
+
+          {/* Signature (si accepté) */}
+          {signe && (
+            <div className="mt-6 rounded-lg border border-slate-200 p-4">
+              <div className="flex items-center justify-between gap-4">
+                <div className="text-sm">
+                  <p className="font-semibold text-green-700">
+                    Bon pour accord — accepté et signé
+                  </p>
+                  <p className="text-slate-500">
+                    Par {devis.signe_par}, le {formatDateTime(devis.signature_at)}
+                  </p>
+                </div>
+                {devis.signature_base64 && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={devis.signature_base64}
+                    alt={`Signature de ${devis.signe_par}`}
+                    className="h-16 object-contain"
+                  />
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

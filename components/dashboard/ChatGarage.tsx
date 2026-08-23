@@ -21,6 +21,13 @@ function BoutonEnvoi() {
   );
 }
 
+const REPONSES_RAPIDES = [
+  "Votre véhicule est prêt, vous pouvez venir le récupérer.",
+  "Nous vous rappelons dès que possible.",
+  "Le devis vous a été envoyé, merci de le valider.",
+  "Bien reçu, merci !",
+];
+
 export function ChatGarage({
   dossierId,
   messages,
@@ -32,6 +39,7 @@ export function ChatGarage({
 }) {
   const formRef = useRef<HTMLFormElement>(null);
   const finRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const action = actionEnvoyerMessage.bind(null, dossierId);
   const [etat, dispatch] = useFormState(
     async (prev: EtatFormulaire, fd: FormData) => {
@@ -93,8 +101,27 @@ export function ChatGarage({
         <div ref={finRef} />
       </div>
 
-      <form ref={formRef} action={dispatch} className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {REPONSES_RAPIDES.map((r) => (
+          <button
+            key={r}
+            type="button"
+            onClick={() => {
+              if (inputRef.current) {
+                inputRef.current.value = r;
+                inputRef.current.focus();
+              }
+            }}
+            className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 transition-colors hover:border-primary-300 hover:bg-primary-50 hover:text-primary-700"
+          >
+            {r.length > 34 ? `${r.slice(0, 32)}…` : r}
+          </button>
+        ))}
+      </div>
+
+      <form ref={formRef} action={dispatch} className="mt-2 flex gap-2">
         <input
+          ref={inputRef}
           name="contenu"
           placeholder="Répondre au client…"
           autoComplete="off"

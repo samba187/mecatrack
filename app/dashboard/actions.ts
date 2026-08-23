@@ -9,6 +9,7 @@ import {
   creerDossier,
   creerFacture,
   creerPrestation,
+  envoyerDocumentClient,
   envoyerMessageGarage,
   getGarageCourant,
   majDossier,
@@ -222,6 +223,19 @@ export async function actionRelancerDevis(
     await relancerDevis(garage, dossierId, devisId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Relance impossible." };
+  }
+  return { ok: true };
+}
+
+export async function actionEnvoyerDocument(
+  dossierId: string,
+  devisId: string
+): Promise<EtatFormulaire> {
+  const garage = await garageOuErreur();
+  try {
+    await envoyerDocumentClient(garage, dossierId, devisId);
+  } catch (e) {
+    return { error: e instanceof Error ? e.message : "Envoi impossible." };
   }
   return { ok: true };
 }

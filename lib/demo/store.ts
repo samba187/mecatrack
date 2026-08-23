@@ -48,6 +48,9 @@ function seed(): DemoDb {
     cachet_url: null,
     lien_avis: "https://g.page/r/exemple-garage-lemoine/review",
     siret: "812 456 789 00023",
+    tva_defaut: 20,
+    conditions_paiement: "Paiement à la restitution du véhicule. Chèque, carte ou espèces acceptés.",
+    mentions_devis: "Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant.",
     stripe_customer_id: null,
     stripe_subscription_id: null,
     plan: "trial",
@@ -404,6 +407,30 @@ function seed(): DemoDb {
     facture_at: null,
     created_at: ilYa(7),
   });
+
+  // ── Passages précédents (historique véhicule) : même immatriculation que d1
+  const d1passe = pousse({
+    client_nom: "Karim Benaïssa",
+    client_telephone: "06 12 44 87 30",
+    client_email: "k.benaissa@gmail.com",
+    vehicule_marque: "Peugeot",
+    vehicule_modele: "308 1.5 BlueHDi",
+    vehicule_immat: "GD-482-KV",
+    vehicule_annee: 2019,
+    kilometrage: 89200,
+    motif_entree: "Vidange + révision 90 000 km, remplacement filtres.",
+    statut: "livre",
+    date_entree: ilYa(168),
+    date_prevue_sortie: ilYa(167),
+    date_livraison: ilYa(167),
+    notes_internes: null,
+  });
+  trace(d1passe, [
+    [null, "en_attente", 168],
+    ["en_attente", "en_cours", 167, 20],
+    ["en_cours", "pret", 167, 6],
+    ["pret", "livre", 167],
+  ]);
 
   // ── Catalogue de prestations réutilisables
   const prestations: Prestation[] = [

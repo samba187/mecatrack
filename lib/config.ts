@@ -40,3 +40,7 @@ export const APP_URL =
 export function lienSuivi(token: string): string {
   return `${APP_URL}/suivi/${token}`;
 }
+
+export function lienDocument(token: string, devisId: string): string {
+  return `${APP_URL}/document/${token}/${devisId}`;
+}

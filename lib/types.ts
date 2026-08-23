@@ -29,6 +29,9 @@ export interface Garage {
   cachet_url: string | null;
   lien_avis: string | null;
   siret: string | null;
+  tva_defaut: number | null;
+  conditions_paiement: string | null;
+  mentions_devis: string | null;
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   plan: Plan;

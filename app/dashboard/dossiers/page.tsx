@@ -7,6 +7,7 @@ import {
   statsGarage,
   type OngletDossiers,
 } from "@/lib/db";
+import { CaChart } from "@/components/dashboard/CaChart";
 import { DossierCarte } from "@/components/dashboard/DossierCarte";
 import { StatsCards } from "@/components/dashboard/StatsCards";
 import { cn } from "@/lib/utils";
@@ -60,6 +61,8 @@ export default async function PageDossiers({
       </div>
 
       <StatsCards stats={stats} />
+
+      <CaChart donnees={stats.caParMois} />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex rounded-lg border border-slate-200 bg-white p-1 shadow-sm">

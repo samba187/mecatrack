@@ -1,15 +1,17 @@
 import "server-only";
 import { randomUUID } from "crypto";
-import { estDemo, APP_URL } from "./config";
+import { estDemo, APP_URL, lienDocument } from "./config";
 import { demoDb } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
 import { maxPhotosParDossier, peutCreerDossier, peutEnvoyerSms } from "./plans";
 import { totauxDevis } from "./utils";
 import {
   emailDevisRepondu,
+  emailDocument,
   emailNouveauMessage,
   smsChangementStatut,
   smsCreationDossier,
+  smsDocument,
   smsGarageDevisRepondu,
   smsGarageMessage,
   smsNouveauDevis,
@@ -246,6 +248,9 @@ export async function majGarage(
       | "logo_url"
       | "cachet_url"
       | "lien_avis"
+      | "tva_defaut"
+      | "conditions_paiement"
+      | "mentions_devis"
     >
   >
 ): Promise<void> {
@@ -845,6 +850,29 @@ export async function relancerDevis(
   }
 }
 
+/** Envoie le devis/facture au client (SMS + email) avec le lien du document. */
+export async function envoyerDocumentClient(
+  garage: Garage,
+  dossierId: string,
+  devisId: string
+): Promise<{ sms: boolean; email: boolean }> {
+  const complet = await getDossierComplet(garage, dossierId);
+  if (!complet) throw new Error("Dossier introuvable");
+  const devis = complet.devis.find((v) => v.id === devisId);
+  if (!devis) throw new Error("Devis introuvable");
+  if (!complet.dossier.client_telephone && !complet.dossier.client_email) {
+    throw new Error(
+      "Ce client n'a ni téléphone ni email — ajoutez-en un au dossier."
+    );
+  }
+  const lien = lienDocument(complet.dossier.token_public, devisId);
+  const sms = Boolean(complet.dossier.client_telephone) && peutEnvoyerSms(garage);
+  if (sms) await smsDocument(garage, complet.dossier, devis, lien);
+  const email = Boolean(complet.dossier.client_email);
+  if (email) await emailDocument(garage, complet.dossier, devis, lien);
+  return { sms, email };
+}
+
 // ── Statistiques du tableau de bord ─────────────────────────────────────────
 
 export interface StatsGarage {
@@ -853,6 +881,7 @@ export interface StatsGarage {
   caMois: number;
   tauxAcceptation: number | null; // 0..1, null si aucun devis répondu
   devisEnAttente: number;
+  caParMois: { mois: string; montant: number }[]; // 6 derniers mois
 }
 
 export async function statsGarage(garage: Garage): Promise<StatsGarage> {
@@ -904,7 +933,78 @@ export async function statsGarage(garage: Garage): Promise<StatsGarage> {
   const tauxAcceptation = repondus > 0 ? acceptes.length / repondus : null;
   const devisEnAttente = devis.filter((v) => v.statut === "en_attente").length;
 
-  return { atelier, livresMois, caMois, tauxAcceptation, devisEnAttente };
+  // Chiffre d'affaires (devis acceptés) des 6 derniers mois, du plus ancien au récent.
+  const MOIS = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."];
+  const caParMois: { mois: string; montant: number }[] = [];
+  for (let k = 5; k >= 0; k--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - k, 1);
+    const montant = acceptes
+      .filter((v) => {
+        const dv = new Date(v.signature_at ?? v.created_at);
+        return (
+          dv.getFullYear() === d.getFullYear() && dv.getMonth() === d.getMonth()
+        );
+      })
+      .reduce((s, v) => s + v.montant_ttc, 0);
+    caParMois.push({ mois: MOIS[d.getMonth()], montant });
+  }
+
+  return {
+    atelier,
+    livresMois,
+    caMois,
+    tauxAcceptation,
+    devisEnAttente,
+    caParMois,
+  };
+}
+
+// ── Historique d'un véhicule (passages précédents, même immatriculation) ─────
+
+export interface VisitePassee {
+  id: string;
+  date_entree: string;
+  date_livraison: string | null;
+  statut: Statut;
+  motif_entree: string | null;
+  kilometrage: number | null;
+}
+
+const normImmat = (s: string) => s.replace(/[\s-]/g, "").toUpperCase();
+
+export async function historiqueVehicule(
+  garage: Garage,
+  immat: string,
+  exclureDossierId: string
+): Promise<VisitePassee[]> {
+  const cible = normImmat(immat);
+  let dossiers: Dossier[];
+  if (estDemo()) {
+    dossiers = demoDb().dossiers.filter((d) => d.garage_id === garage.id);
+  } else {
+    const { data } = await supabaseServer()
+      .from("dossiers")
+      .select("*")
+      .eq("garage_id", garage.id);
+    dossiers = (data ?? []) as Dossier[];
+  }
+  return dossiers
+    .filter(
+      (d) =>
+        d.id !== exclureDossierId && normImmat(d.vehicule_immat) === cible
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.date_entree).getTime() - new Date(a.date_entree).getTime()
+    )
+    .map((d) => ({
+      id: d.id,
+      date_entree: d.date_entree,
+      date_livraison: d.date_livraison,
+      statut: d.statut,
+      motif_entree: d.motif_entree,
+      kilometrage: d.kilometrage,
+    }));
 }
 
 // ── Espace documentaire : tous les devis du garage ──────────────────────────
@@ -974,6 +1074,48 @@ export async function getDevisPourImpression(
   const devis = complet.devis.find((v) => v.id === devisId);
   if (!devis) return null;
   return { devis, dossier: complet.dossier };
+}
+
+/** Devis/facture accessible publiquement par le client via le token de suivi. */
+export async function getDocumentParToken(
+  token: string,
+  devisId: string
+): Promise<{ garage: Garage; dossier: Dossier; devis: Devis } | null> {
+  if (estDemo()) {
+    const db = demoDb();
+    const dossier = db.dossiers.find((d) => d.token_public === token);
+    if (!dossier) return null;
+    const devis = db.devis.find(
+      (v) => v.id === devisId && v.dossier_id === dossier.id
+    );
+    if (!devis) return null;
+    return { garage: db.garage, dossier, devis };
+  }
+  const admin = supabaseAdmin();
+  const { data: dossier } = await admin
+    .from("dossiers")
+    .select("*")
+    .eq("token_public", token)
+    .single();
+  if (!dossier) return null;
+  const { data: devis } = await admin
+    .from("devis")
+    .select("*")
+    .eq("id", devisId)
+    .eq("dossier_id", (dossier as Dossier).id)
+    .single();
+  if (!devis) return null;
+  const { data: garage } = await admin
+    .from("garages")
+    .select("*")
+    .eq("id", (dossier as Dossier).garage_id)
+    .single();
+  if (!garage) return null;
+  return {
+    garage: garage as Garage,
+    dossier: dossier as Dossier,
+    devis: devis as Devis,
+  };
 }
 
 // ── Messagerie ──────────────────────────────────────────────────────────────

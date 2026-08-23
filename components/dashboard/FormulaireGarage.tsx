@@ -4,7 +4,7 @@ import { useFormState, useFormStatus } from "react-dom";
 import { AlertCircle, Check } from "lucide-react";
 import { actionMajGarage, type EtatFormulaire } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/Button";
-import { Champ, Input } from "@/components/ui/Input";
+import { Champ, Input, Textarea } from "@/components/ui/Input";
 import { ImageUpload } from "@/components/ui/ImageUpload";
 import type { Garage } from "@/lib/types";
 
@@ -129,6 +129,58 @@ export function FormulaireGarage({ garage }: { garage: Garage }) {
             type="url"
             placeholder="https://g.page/r/…/review"
             defaultValue={garage.lien_avis ?? ""}
+          />
+        </Champ>
+
+        <div className="sm:col-span-2">
+          <p className="mb-3 mt-2 border-t border-slate-100 pt-4 text-sm font-semibold text-slate-700">
+            Valeurs par défaut des devis
+          </p>
+        </div>
+        <Champ
+          label="TVA par défaut (%)"
+          htmlFor="tva_defaut"
+          erreur={err.tva_defaut}
+          aide="Pré-remplie sur chaque nouveau devis."
+        >
+          <Input
+            id="tva_defaut"
+            name="tva_defaut"
+            type="number"
+            min={0}
+            max={100}
+            step="0.1"
+            placeholder="20"
+            className="font-mono"
+            defaultValue={garage.tva_defaut ?? ""}
+          />
+        </Champ>
+        <Champ
+          label="Conditions de paiement"
+          htmlFor="conditions_paiement"
+          erreur={err.conditions_paiement}
+          aide="Affichées en bas de vos devis et factures."
+        >
+          <Input
+            id="conditions_paiement"
+            name="conditions_paiement"
+            placeholder="Paiement à la restitution du véhicule."
+            defaultValue={garage.conditions_paiement ?? ""}
+          />
+        </Champ>
+        <Champ
+          label="Mentions légales du devis"
+          htmlFor="mentions_devis"
+          erreur={err.mentions_devis}
+          aide="Remplacent la mention par défaut sur vos documents."
+          className="sm:col-span-2"
+        >
+          <Textarea
+            id="mentions_devis"
+            name="mentions_devis"
+            rows={2}
+            placeholder="Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant."
+            defaultValue={garage.mentions_devis ?? ""}
           />
         </Champ>
       </div>

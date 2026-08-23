@@ -12,12 +12,14 @@ import {
   Printer,
   Receipt,
   RefreshCw,
+  Send,
   Trash2,
   XCircle,
 } from "lucide-react";
 import {
   actionCreerDevis,
   actionCreerFacture,
+  actionEnvoyerDocument,
   actionRelancerDevis,
   type EtatFormulaire,
 } from "@/app/dashboard/actions";
@@ -48,11 +50,13 @@ function FormulaireDevis({
   dossierId,
   type,
   prestations,
+  tvaDefaut,
   onSucces,
 }: {
   dossierId: string;
   type: "initial" | "supplementaire";
   prestations: Prestation[];
+  tvaDefaut: number;
   onSucces: () => void;
 }) {
   const action = actionCreerDevis.bind(null, dossierId);
@@ -65,7 +69,7 @@ function FormulaireDevis({
     {}
   );
   const [lignes, setLignes] = useState<LigneEdit[]>([ligneVide()]);
-  const [tva, setTva] = useState("20");
+  const [tva, setTva] = useState(String(tvaDefaut));
 
   const totaux = useMemo(
     () => totauxDevis(lignes, parseFloat(tva.replace(",", ".")) || 0),
@@ -312,6 +316,42 @@ function BoutonRelance({
   );
 }
 
+function BoutonEnvoyerClient({
+  dossierId,
+  devisId,
+}: {
+  dossierId: string;
+  devisId: string;
+}) {
+  const [enCours, demarrer] = useTransition();
+  const [etat, setEtat] = useState<"idle" | "ok" | "erreur">("idle");
+  return (
+    <button
+      type="button"
+      disabled={enCours || etat === "ok"}
+      onClick={() =>
+        demarrer(async () => {
+          const r = await actionEnvoyerDocument(dossierId, devisId);
+          setEtat(r.error ? "erreur" : "ok");
+        })
+      }
+      title="Envoyer par SMS et email au client"
+      className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-primary-300 hover:text-primary-700 disabled:opacity-70"
+    >
+      {etat === "ok" ? (
+        <>
+          <Check className="h-3.5 w-3.5 text-green-600" /> Envoyé au client
+        </>
+      ) : (
+        <>
+          <Send className="h-3.5 w-3.5" />
+          {enCours ? "Envoi…" : etat === "erreur" ? "Réessayer" : "Envoyer au client"}
+        </>
+      )}
+    </button>
+  );
+}
+
 function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
   const s = STATUT_DEVIS[devis.statut];
   const attenteJours =
@@ -378,6 +418,7 @@ function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
             <Printer className="h-3.5 w-3.5" />
             Devis PDF
           </Link>
+          <BoutonEnvoyerClient dossierId={dossierId} devisId={devis.id} />
           {devis.statut === "en_attente" && (
             <BoutonRelance dossierId={dossierId} devisId={devis.id} />
           )}
@@ -404,10 +445,12 @@ export function DevisSection({
   dossierId,
   devis,
   prestations,
+  tvaDefaut = 20,
 }: {
   dossierId: string;
   devis: Devis[];
   prestations: Prestation[];
+  tvaDefaut?: number;
 }) {
   const [modal, setModal] = useState<null | "initial" | "supplementaire">(null);
   const aDejaDevis = devis.length > 0;
@@ -457,6 +500,7 @@ export function DevisSection({
             dossierId={dossierId}
             type={modal}
             prestations={prestations}
+            tvaDefaut={tvaDefaut}
             onSucces={() => setModal(null)}
           />
         )}

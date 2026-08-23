@@ -152,9 +152,13 @@ export default async function PageImpressionDevis({
 
           {/* Pied : mentions, cachet, signature */}
           <div className="mt-8 flex items-end justify-between gap-6 border-t border-slate-200 pt-6">
-            <div className="max-w-xs text-xs leading-relaxed text-slate-400">
-              <p>Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant.</p>
-              <p className="mt-1">
+            <div className="max-w-xs space-y-1 text-xs leading-relaxed text-slate-400">
+              <p>
+                {garage.mentions_devis ??
+                  "Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant."}
+              </p>
+              {garage.conditions_paiement && <p>{garage.conditions_paiement}</p>}
+              <p>
                 Document généré via Mécatrack le {formatDateTime(devis.created_at)}.
               </p>
             </div>

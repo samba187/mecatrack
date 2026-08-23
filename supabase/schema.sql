@@ -15,6 +15,9 @@ create table public.garages (
   cachet_url text, -- cachet/signature scanné du garage (data URL)
   lien_avis text,  -- URL d'avis (Google) proposée au client à la livraison
   siret text,
+  tva_defaut numeric(5,2),      -- TVA pré-remplie sur les nouveaux devis
+  conditions_paiement text,     -- affichées au bas des devis/factures
+  mentions_devis text,          -- mentions légales personnalisées
   stripe_customer_id text,
   stripe_subscription_id text,
   plan text not null default 'trial' check (plan in ('trial', 'essentiel', 'pro', 'expired')),
@@ -26,6 +29,9 @@ create unique index garages_user_id_idx on public.garages(user_id);
 alter table public.garages add column if not exists telephone_mobile text;
 alter table public.garages add column if not exists cachet_url text;
 alter table public.garages add column if not exists lien_avis text;
+alter table public.garages add column if not exists tva_defaut numeric(5,2);
+alter table public.garages add column if not exists conditions_paiement text;
+alter table public.garages add column if not exists mentions_devis text;
 
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),

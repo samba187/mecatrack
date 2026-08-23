@@ -11,9 +11,15 @@ import { StatutSelect } from "@/components/dashboard/StatutSelect";
 import { Timeline } from "@/components/Timeline";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { lienSuivi } from "@/lib/config";
-import { getDossierComplet, getGarageCourant, listPrestations } from "@/lib/db";
+import {
+  getDossierComplet,
+  getGarageCourant,
+  historiqueVehicule,
+  listPrestations,
+} from "@/lib/db";
 import { maxPhotosParDossier, peutEnvoyerSms } from "@/lib/plans";
-import { formatDate, formatImmat } from "@/lib/utils";
+import { statutConfig } from "@/lib/statuts";
+import { cn, formatDate, formatImmat } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +37,11 @@ export default async function PageDossier({
   const prestations = await listPrestations(garage);
   const { dossier, photos, devis, messages, historique } = complet;
   const nonLus = messages.some((m) => m.auteur === "client" && !m.lu);
+  const passages = await historiqueVehicule(
+    garage,
+    dossier.vehicule_immat,
+    dossier.id
+  );
 
   return (
     <div className="space-y-5">
@@ -146,6 +157,7 @@ export default async function PageDossier({
                 dossierId={dossier.id}
                 devis={devis}
                 prestations={prestations}
+                tvaDefaut={garage.tva_defaut ?? 20}
               />
             </CardBody>
           </Card>
@@ -163,6 +175,52 @@ export default async function PageDossier({
         </div>
 
         <div className="space-y-5">
+          {passages.length > 0 && (
+            <Card>
+              <CardHeader
+                titre={`Déjà venu ${passages.length} fois`}
+                description="Historique de ce véhicule dans votre garage."
+              />
+              <CardBody className="space-y-2.5">
+                {passages.map((p) => {
+                  const cfg = statutConfig(p.statut);
+                  return (
+                    <Link
+                      key={p.id}
+                      href={`/dashboard/dossiers/${p.id}`}
+                      className="block rounded-lg border border-slate-200 p-3 transition-colors hover:border-primary-300 hover:bg-slate-50"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-sm font-medium text-ink">
+                          {formatDate(p.date_entree)}
+                        </span>
+                        <span
+                          className={cn(
+                            "rounded-full px-2 py-0.5 text-[11px] font-medium",
+                            cfg.bg,
+                            cfg.color
+                          )}
+                        >
+                          {cfg.label}
+                        </span>
+                      </div>
+                      {p.motif_entree && (
+                        <p className="mt-1 line-clamp-2 text-xs text-slate-500">
+                          {p.motif_entree}
+                        </p>
+                      )}
+                      {p.kilometrage != null && (
+                        <p className="mt-0.5 font-mono text-[11px] text-slate-400">
+                          {p.kilometrage.toLocaleString("fr-FR")} km
+                        </p>
+                      )}
+                    </Link>
+                  );
+                })}
+              </CardBody>
+            </Card>
+          )}
+
           <Card>
             <CardHeader titre="Historique" />
             <CardBody>

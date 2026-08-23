@@ -1,7 +1,14 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Check, Copy, ExternalLink, MessageSquareShare } from "lucide-react";
+import {
+  Check,
+  Copy,
+  ExternalLink,
+  MessageSquareShare,
+  QrCode,
+} from "lucide-react";
+import Link from "next/link";
 import { actionEnvoyerLienSms } from "@/app/dashboard/actions";
 import { Button } from "@/components/ui/Button";
 
@@ -89,6 +96,14 @@ export function LienClient({
           <ExternalLink className="h-4 w-4" />
           Voir la page client
         </a>
+        <Link
+          href={`/impression/qr/${dossierId}`}
+          target="_blank"
+          className="inline-flex h-11 items-center gap-2 rounded-lg px-3 text-sm font-medium text-slate-500 transition-colors hover:bg-slate-100 hover:text-ink"
+        >
+          <QrCode className="h-4 w-4" />
+          QR à imprimer
+        </Link>
       </div>
       {erreur && <p className="text-sm text-red-600">{erreur}</p>}
       {!smsPossible && (
