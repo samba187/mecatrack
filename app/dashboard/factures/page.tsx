@@ -2,7 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Printer, Receipt } from "lucide-react";
 import { getGarageCourant, listTousDevis } from "@/lib/db";
-import { cn, formatDate, formatEuros, formatImmat } from "@/lib/utils";
+import { formatDate, formatEuros, formatImmat } from "@/lib/utils";
 
 export const metadata = { title: "Factures" };
 export const dynamic = "force-dynamic";
