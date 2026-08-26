@@ -108,12 +108,13 @@ export function FormulaireGarage({ garage }: { garage: Garage }) {
         <Champ
           label="Cachet ou signature"
           erreur={err.cachet_url}
-          aide="Photo/scan de votre tampon ou signature. Ajouté sur le devis, en plus du cachet automatique. PNG à fond transparent conseillé."
+          aide="Photo/scan de votre tampon ou signature : le fond blanc est retiré automatiquement pour un rendu propre sur le devis."
         >
           <ImageUpload
             name="cachet_url"
             defaultValue={garage.cachet_url}
             format="png"
+            retirerFond
           />
         </Champ>
         <Champ

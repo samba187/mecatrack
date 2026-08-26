@@ -3,6 +3,12 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { COOKIE_DEMO, DEMO_MODE, APP_URL } from "@/lib/config";
+import {
+  CONDITIONS_PAIEMENT_DEFAUT,
+  MENTIONS_DEVIS_DEFAUT,
+  PRESTATIONS_DEFAUT,
+  TVA_DEFAUT,
+} from "@/lib/defaults";
 import { DUREE_ESSAI_JOURS } from "@/lib/plans";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { schemaConnexion, schemaInscription } from "@/lib/validation";
@@ -90,10 +96,23 @@ export async function actionInscription(
       telephone,
       plan: "trial",
       trial_ends_at: trialEnd,
+      tva_defaut: TVA_DEFAUT,
+      conditions_paiement: CONDITIONS_PAIEMENT_DEFAUT,
+      mentions_devis: MENTIONS_DEVIS_DEFAUT,
     })
     .select()
     .single();
   if (errGarage) return { error: "Erreur lors de la création du compte garage." };
+
+  // Pré-remplit un catalogue de prestations pour que le garage ne parte pas
+  // d'une page blanche. Non bloquant : un échec ici n'empêche pas l'inscription.
+  await admin.from("prestations").insert(
+    PRESTATIONS_DEFAUT.map((p) => ({
+      garage_id: (garage as Garage).id,
+      designation: p.designation,
+      prix_ht: p.prix_ht,
+    }))
+  );
 
   // Confirmation d'email requise (aucune session ouverte) : on invite le
   // garagiste à valider son adresse avant de pouvoir se connecter.

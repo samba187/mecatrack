@@ -14,6 +14,7 @@ export function ImageUpload({
   defaultValue,
   format = "png",
   maxSize = 400,
+  retirerFond = false,
   className,
   hauteurApercu = "h-20",
 }: {
@@ -22,6 +23,8 @@ export function ImageUpload({
   /** jpeg = fond blanc (logo) ; png = transparence conservée (cachet/signature). */
   format?: "png" | "jpeg";
   maxSize?: number;
+  /** Détoure automatiquement le fond blanc (scan de cachet/signature). */
+  retirerFond?: boolean;
   className?: string;
   hauteurApercu?: string;
 }) {
@@ -49,6 +52,21 @@ export function ImageUpload({
             ctx.fillRect(0, 0, w, h);
           }
           ctx.drawImage(img, 0, 0, w, h);
+          // Détourage : rend le fond blanc (papier scanné) transparent, en
+          // gardant l'encre. Adouci sur les gris clairs pour lisser les bords.
+          if (retirerFond && format === "png") {
+            const data = ctx.getImageData(0, 0, w, h);
+            const d = data.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const min = Math.min(d[i], d[i + 1], d[i + 2]);
+              if (min > 238) {
+                d[i + 3] = 0;
+              } else if (min > 205) {
+                d[i + 3] = Math.round((d[i + 3] * (238 - min)) / 33);
+              }
+            }
+            ctx.putImageData(data, 0, 0);
+          }
           setValue(
             canvas.toDataURL(
               format === "jpeg" ? "image/jpeg" : "image/png",
