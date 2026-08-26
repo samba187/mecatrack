@@ -52,20 +52,46 @@ export function ImageUpload({
             ctx.fillRect(0, 0, w, h);
           }
           ctx.drawImage(img, 0, 0, w, h);
-          // Détourage : rend le fond blanc (papier scanné) transparent, en
-          // gardant l'encre. Adouci sur les gris clairs pour lisser les bords.
+          // Détourage adaptatif : estime la couleur de fond à partir des
+          // 4 coins (blanc, crème, gris clair de scan…), puis rend
+          // transparents les pixels proches de ce fond. L'encre du cachet ou
+          // de la signature est conservée ; les bords sont adoucis.
           if (retirerFond && format === "png") {
             const data = ctx.getImageData(0, 0, w, h);
             const d = data.data;
-            for (let i = 0; i < d.length; i += 4) {
-              const min = Math.min(d[i], d[i + 1], d[i + 2]);
-              if (min > 238) {
-                d[i + 3] = 0;
-              } else if (min > 205) {
-                d[i + 3] = Math.round((d[i + 3] * (238 - min)) / 33);
-              }
+            const coins = [
+              0,
+              (w - 1) * 4,
+              (h - 1) * w * 4,
+              ((h - 1) * w + (w - 1)) * 4,
+            ];
+            let fr = 0,
+              fg = 0,
+              fb = 0;
+            for (const c of coins) {
+              fr += d[c];
+              fg += d[c + 1];
+              fb += d[c + 2];
             }
-            ctx.putImageData(data, 0, 0);
+            fr /= 4;
+            fg /= 4;
+            fb /= 4;
+            // On ne détoure que si le fond est clair (évite de trouer un
+            // cachet à fond coloré plein).
+            if (Math.min(fr, fg, fb) > 170) {
+              for (let i = 0; i < d.length; i += 4) {
+                const dist =
+                  Math.abs(d[i] - fr) +
+                  Math.abs(d[i + 1] - fg) +
+                  Math.abs(d[i + 2] - fb);
+                if (dist < 45) {
+                  d[i + 3] = 0;
+                } else if (dist < 110) {
+                  d[i + 3] = Math.round((d[i + 3] * (dist - 45)) / 65);
+                }
+              }
+              ctx.putImageData(data, 0, 0);
+            }
           }
           setValue(
             canvas.toDataURL(
