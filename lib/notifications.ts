@@ -1,5 +1,12 @@
-import { lienSuivi } from "./config";
+import { lienSuivi, SUPPORT_EMAIL } from "./config";
 import type { Devis, Dossier, Garage, Statut } from "./types";
+
+function echapperHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
 
 /**
  * SMS (Twilio) et emails (Resend). Si les clés ne sont pas configurées,
@@ -171,15 +178,34 @@ export async function smsGarageMessage(
 function gabarit(titre: string, corps: string, cta?: { label: string; url: string }): string {
   return `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-    <div style="font-size:18px;font-weight:bold;color:#1B3A6B;margin-bottom:24px">M&eacute;catrack</div>
+    <div style="font-size:18px;font-weight:bold;color:#1B3A6B;margin-bottom:24px">Fiavo</div>
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:32px">
       <h1 style="font-size:20px;margin:0 0 16px">${titre}</h1>
       <div style="font-size:15px;line-height:1.6;color:#334155">${corps}</div>
       ${cta ? `<a href="${cta.url}" style="display:inline-block;margin-top:24px;background:#1B3A6B;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px">${cta.label}</a>` : ""}
     </div>
-    <p style="font-size:12px;color:#94A3B8;margin-top:24px">M&eacute;catrack — Suivi de r&eacute;paration pour garages ind&eacute;pendants</p>
+    <p style="font-size:12px;color:#94A3B8;margin-top:24px">Fiavo — Suivi de r&eacute;paration pour garages ind&eacute;pendants</p>
   </div>
 </body></html>`;
+}
+
+export async function emailSupport(
+  garage: Garage,
+  sujet: string,
+  message: string
+) {
+  await envoyerEmail(
+    SUPPORT_EMAIL,
+    `[Support Fiavo] ${sujet || "Nouveau message"} — ${garage.nom}`,
+    gabarit(
+      `Message de ${echapperHtml(garage.nom)}`,
+      `<p style="margin:0 0 8px"><strong>Garage :</strong> ${echapperHtml(garage.nom)}</p>
+       <p style="margin:0 0 8px"><strong>Email :</strong> ${echapperHtml(garage.email ?? "—")}</p>
+       <p style="margin:0 0 8px"><strong>Téléphone :</strong> ${echapperHtml(garage.telephone ?? "—")}</p>
+       <p style="margin:0 0 16px"><strong>Sujet :</strong> ${echapperHtml(sujet || "—")}</p>
+       <p style="white-space:pre-wrap;margin:0">${echapperHtml(message)}</p>`
+    )
+  );
 }
 
 export async function emailNouveauMessage(

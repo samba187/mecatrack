@@ -11,6 +11,7 @@ import {
   creerPrestation,
   envoyerDocumentClient,
   envoyerMessageGarage,
+  envoyerMessageSupport,
   getGarageCourant,
   majDossier,
   majGarage,
@@ -236,6 +237,23 @@ export async function actionEnvoyerDocument(
     await envoyerDocumentClient(garage, dossierId, devisId);
   } catch (e) {
     return { error: e instanceof Error ? e.message : "Envoi impossible." };
+  }
+  return { ok: true };
+}
+
+export async function actionEnvoyerSupport(
+  sujet: string,
+  message: string
+): Promise<EtatFormulaire> {
+  const garage = await garageOuErreur();
+  const msg = (message ?? "").trim();
+  if (msg.length < 5) {
+    return { error: "Décrivez un peu plus votre demande." };
+  }
+  try {
+    await envoyerMessageSupport(garage, (sujet ?? "").trim(), msg);
+  } catch {
+    return { error: "Envoi impossible pour le moment, réessayez." };
   }
   return { ok: true };
 }

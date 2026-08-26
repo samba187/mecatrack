@@ -14,6 +14,7 @@ import {
   emailDevisRepondu,
   emailDocument,
   emailNouveauMessage,
+  emailSupport,
   smsChangementStatut,
   smsCreationDossier,
   smsDocument,
@@ -1030,6 +1031,24 @@ export async function historiqueVehicule(
       motif_entree: d.motif_entree,
       kilometrage: d.kilometrage,
     }));
+}
+
+// ── Support (bulle d'aide) ──────────────────────────────────────────────────
+
+export async function envoyerMessageSupport(
+  garage: Garage,
+  sujet: string,
+  message: string
+): Promise<void> {
+  if (!estDemo()) {
+    await supabaseAdmin().from("support_messages").insert({
+      garage_id: garage.id,
+      email: garage.email,
+      sujet: sujet || null,
+      message,
+    });
+  }
+  await emailSupport(garage, sujet, message);
 }
 
 // ── Consommation mensuelle (véhicules + SMS) ────────────────────────────────

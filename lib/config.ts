@@ -44,3 +44,6 @@ export function lienSuivi(token: string): string {
 export function lienDocument(token: string, devisId: string): string {
   return `${APP_URL}/document/${token}/${devisId}`;
 }
+
+/** Adresse qui reçoit les messages de support des garages. */
+export const SUPPORT_EMAIL = process.env.SUPPORT_EMAIL ?? "contact@fiavo.fr";

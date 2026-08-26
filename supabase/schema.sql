@@ -42,6 +42,18 @@ create table if not exists public.sms_usage (
 );
 alter table public.sms_usage enable row level security;
 
+-- Messages de support envoyés depuis la bulle d'aide (lus via l'admin)
+create table if not exists public.support_messages (
+  id uuid primary key default gen_random_uuid(),
+  garage_id uuid references public.garages(id) on delete set null,
+  email text,
+  sujet text,
+  message text not null,
+  traite boolean not null default false,
+  created_at timestamptz not null default now()
+);
+alter table public.support_messages enable row level security;
+
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),
   garage_id uuid not null references public.garages(id) on delete cascade,

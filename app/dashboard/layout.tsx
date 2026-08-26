@@ -4,6 +4,7 @@ import { FileText, FolderOpen, Receipt, Settings, Tag } from "lucide-react";
 import { Logo } from "@/components/Logo";
 import { DeconnexionBouton } from "@/components/dashboard/DeconnexionBouton";
 import { NotificationBell } from "@/components/dashboard/NotificationBell";
+import { SupportBubble } from "@/components/dashboard/SupportBubble";
 import {
   compteNotificationsNonLues,
   getGarageCourant,
@@ -125,6 +126,8 @@ export default async function DashboardLayout({
       <main className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
         {children}
       </main>
+
+      <SupportBubble garageNom={garage.nom} garageEmail={garage.email} />
     </div>
   );
 }
