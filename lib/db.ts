@@ -1040,13 +1040,19 @@ export async function envoyerMessageSupport(
   sujet: string,
   message: string
 ): Promise<void> {
+  // L'email au support est prioritaire ; l'archivage en base est best-effort
+  // (n'échoue pas l'envoi si la table n'existe pas encore).
   if (!estDemo()) {
-    await supabaseAdmin().from("support_messages").insert({
-      garage_id: garage.id,
-      email: garage.email,
-      sujet: sujet || null,
-      message,
-    });
+    try {
+      await supabaseAdmin().from("support_messages").insert({
+        garage_id: garage.id,
+        email: garage.email,
+        sujet: sujet || null,
+        message,
+      });
+    } catch (e) {
+      console.error("support_messages insert échoué", e);
+    }
   }
   await emailSupport(garage, sujet, message);
 }
