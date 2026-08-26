@@ -159,7 +159,7 @@ export default async function PageImpressionDevis({
               </p>
               {garage.conditions_paiement && <p>{garage.conditions_paiement}</p>}
               <p>
-                Document généré via Mécatrack le {formatDateTime(devis.created_at)}.
+                Document généré via Fiavo le {formatDateTime(devis.created_at)}.
               </p>
             </div>
             <div className="flex items-end gap-4">

@@ -3,7 +3,12 @@ import { randomUUID } from "crypto";
 import { estDemo, APP_URL, lienDocument } from "./config";
 import { demoDb } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
-import { maxPhotosParDossier, peutCreerDossier, peutEnvoyerSms } from "./plans";
+import {
+  maxPhotosParDossier,
+  peutCreerDossier,
+  peutEnvoyerSms,
+  quotaVehicules,
+} from "./plans";
 import { totauxDevis } from "./utils";
 import {
   emailDevisRepondu,
@@ -449,6 +454,15 @@ export async function creerDossier(
       "Votre période d'essai est terminée. Choisissez une formule pour créer de nouveaux dossiers."
     );
   }
+  const quota = quotaVehicules(garage);
+  if (Number.isFinite(quota)) {
+    const utilises = await vehiculesCeMois(garage);
+    if (utilises >= quota) {
+      throw new Error(
+        `Vous avez atteint la limite de ${quota} véhicules ce mois-ci. Passez au plan Pro pour des véhicules illimités.`
+      );
+    }
+  }
   const maintenant = new Date().toISOString();
   const dossier: Dossier = {
     id: randomUUID(),
@@ -492,6 +506,7 @@ export async function creerDossier(
 
   if (peutEnvoyerSms(garage) && dossier.client_telephone) {
     await smsCreationDossier(garage, dossier);
+    await incrementerSmsCeMois(garage);
   }
   return dossier;
 }
@@ -585,8 +600,9 @@ export async function changerStatut(
     dossier.statut = nouveau;
   }
 
-  if (peutEnvoyerSms(garage)) {
+  if (peutEnvoyerSms(garage) && dossier.client_telephone) {
     await smsChangementStatut(garage, dossier, nouveau);
+    await incrementerSmsCeMois(garage);
   }
 }
 
@@ -784,8 +800,13 @@ export async function creerDevis(
   }
 
   // Un devis supplémentaire nécessite l'accord du client → on le prévient.
-  if (input.type === "supplementaire" && peutEnvoyerSms(garage)) {
+  if (
+    input.type === "supplementaire" &&
+    peutEnvoyerSms(garage) &&
+    dossier.client_telephone
+  ) {
     await smsNouveauDevis(garage, dossier);
+    await incrementerSmsCeMois(garage);
   }
   return devis;
 }
@@ -845,8 +866,9 @@ export async function relancerDevis(
   if (!devis) throw new Error("Devis introuvable");
   if (devis.statut !== "en_attente")
     throw new Error("Ce devis a déjà reçu une réponse.");
-  if (peutEnvoyerSms(garage)) {
+  if (peutEnvoyerSms(garage) && complet.dossier.client_telephone) {
     await smsNouveauDevis(garage, complet.dossier);
+    await incrementerSmsCeMois(garage);
   }
 }
 
@@ -867,7 +889,10 @@ export async function envoyerDocumentClient(
   }
   const lien = lienDocument(complet.dossier.token_public, devisId);
   const sms = Boolean(complet.dossier.client_telephone) && peutEnvoyerSms(garage);
-  if (sms) await smsDocument(garage, complet.dossier, devis, lien);
+  if (sms) {
+    await smsDocument(garage, complet.dossier, devis, lien);
+    await incrementerSmsCeMois(garage);
+  }
   const email = Boolean(complet.dossier.client_email);
   if (email) await emailDocument(garage, complet.dossier, devis, lien);
   return { sms, email };
@@ -1005,6 +1030,76 @@ export async function historiqueVehicule(
       motif_entree: d.motif_entree,
       kilometrage: d.kilometrage,
     }));
+}
+
+// ── Consommation mensuelle (véhicules + SMS) ────────────────────────────────
+
+function moisCourant(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+}
+
+/** Nombre de véhicules (nouveaux dossiers) créés dans le mois calendaire courant. */
+export async function vehiculesCeMois(garage: Garage): Promise<number> {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = now.getMonth();
+  if (estDemo()) {
+    return demoDb().dossiers.filter((d) => {
+      if (d.garage_id !== garage.id) return false;
+      const dc = new Date(d.created_at);
+      return dc.getFullYear() === y && dc.getMonth() === m;
+    }).length;
+  }
+  const debut = new Date(y, m, 1).toISOString();
+  const { count } = await supabaseServer()
+    .from("dossiers")
+    .select("id", { count: "exact", head: true })
+    .eq("garage_id", garage.id)
+    .gte("created_at", debut);
+  return count ?? 0;
+}
+
+/** SMS envoyés pour ce garage dans le mois courant. */
+export async function smsCeMois(garage: Garage): Promise<number> {
+  const mois = moisCourant();
+  if (estDemo()) {
+    return demoDb().smsParMois[mois] ?? 0;
+  }
+  const { data } = await supabaseServer()
+    .from("sms_usage")
+    .select("count")
+    .eq("garage_id", garage.id)
+    .eq("mois", mois)
+    .maybeSingle();
+  return (data?.count as number | undefined) ?? 0;
+}
+
+/** Incrémente le compteur de SMS du mois (appelé à chaque SMS réellement envoyé). */
+export async function incrementerSmsCeMois(
+  garage: Garage,
+  n = 1
+): Promise<void> {
+  const mois = moisCourant();
+  if (estDemo()) {
+    const db = demoDb();
+    db.smsParMois[mois] = (db.smsParMois[mois] ?? 0) + n;
+    return;
+  }
+  const admin = supabaseAdmin();
+  const { data } = await admin
+    .from("sms_usage")
+    .select("count")
+    .eq("garage_id", garage.id)
+    .eq("mois", mois)
+    .maybeSingle();
+  const nouveau = (((data?.count as number | undefined) ?? 0) + n);
+  await admin
+    .from("sms_usage")
+    .upsert(
+      { garage_id: garage.id, mois, count: nouveau },
+      { onConflict: "garage_id,mois" }
+    );
 }
 
 // ── Espace documentaire : tous les devis du garage ──────────────────────────

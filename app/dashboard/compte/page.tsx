@@ -1,15 +1,39 @@
 import { redirect } from "next/navigation";
-import { BadgeCheck, CreditCard } from "lucide-react";
+import { BadgeCheck, Car, CreditCard, MessageSquare } from "lucide-react";
 import { FormulaireGarage } from "@/components/dashboard/FormulaireGarage";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { DEMO_MODE } from "@/lib/config";
-import { getGarageCourant } from "@/lib/db";
-import { PLANS, planEffectif } from "@/lib/plans";
+import {
+  getGarageCourant,
+  smsCeMois,
+  vehiculesCeMois,
+} from "@/lib/db";
+import {
+  coutDepassementSms,
+  PLANS,
+  planEffectif,
+  PRIX_SMS_SUPPLEMENTAIRE,
+  quotaSms,
+  quotaVehicules,
+} from "@/lib/plans";
 import { formatDate, joursRestants } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 
 export const metadata = { title: "Mon compte" };
 export const dynamic = "force-dynamic";
+
+function Barre({ pct }: { pct: number }) {
+  const couleur =
+    pct >= 100 ? "bg-amber-500" : pct >= 80 ? "bg-amber-400" : "bg-primary-600";
+  return (
+    <div className="h-2 w-full overflow-hidden rounded-full bg-slate-100">
+      <div
+        className={cn("h-full rounded-full transition-all", couleur)}
+        style={{ width: `${Math.max(pct, 2)}%` }}
+      />
+    </div>
+  );
+}
 
 export default async function PageCompte({
   searchParams,
@@ -22,7 +46,17 @@ export default async function PageCompte({
   const plan = planEffectif(garage);
   const enEssai = garage.plan === "trial" && plan !== "expired";
   const jours = joursRestants(garage.trial_ends_at);
-  const abonne = garage.plan === "essentiel" || garage.plan === "pro";
+  const abonne = garage.plan === "atelier" || garage.plan === "pro";
+
+  // Consommation du mois en cours (véhicules + SMS).
+  const [vehUtilises, smsUtilises] = await Promise.all([
+    vehiculesCeMois(garage),
+    smsCeMois(garage),
+  ]);
+  const qVeh = quotaVehicules(garage);
+  const qSms = quotaSms(garage);
+  const smsSup = Math.max(0, smsUtilises - qSms);
+  const coutSup = coutDepassementSms(smsUtilises, qSms);
 
   return (
     <div className="mx-auto max-w-3xl space-y-5">
@@ -61,12 +95,12 @@ export default async function PageCompte({
               ? `Essai gratuit — ${jours} jour${jours > 1 ? "s" : ""} restant${jours > 1 ? "s" : ""} avec toutes les fonctionnalités Pro.`
               : plan === "expired"
                 ? "Votre essai est terminé. Choisissez une formule pour continuer."
-                : `Vous êtes sur la formule ${PLANS[plan as "essentiel" | "pro"].nom}.`
+                : `Vous êtes sur la formule ${PLANS[plan as "atelier" | "pro"].nom}.`
           }
         />
         <CardBody>
           <div className="grid gap-4 sm:grid-cols-2">
-            {(["essentiel", "pro"] as const).map((id) => {
+            {(["atelier", "pro"] as const).map((id) => {
               const p = PLANS[id];
               const actuel = garage.plan === id;
               return (
@@ -145,6 +179,72 @@ export default async function PageCompte({
           </div>
         </CardBody>
       </Card>
+
+      {plan !== "expired" && (
+        <Card>
+          <CardHeader
+            titre="Consommation du mois"
+            description="Vos compteurs se remettent à zéro le 1er de chaque mois."
+          />
+          <CardBody className="space-y-5">
+            {/* Véhicules */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 font-medium text-ink">
+                  <Car className="h-4 w-4 text-slate-400" />
+                  Véhicules ce mois
+                </span>
+                <span className="text-slate-500">
+                  {Number.isFinite(qVeh) ? (
+                    <>
+                      <span className="font-semibold text-ink">{vehUtilises}</span> / {qVeh}
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-semibold text-ink">{vehUtilises}</span> · illimité
+                    </>
+                  )}
+                </span>
+              </div>
+              {Number.isFinite(qVeh) ? (
+                <Barre pct={Math.min(100, (vehUtilises / qVeh) * 100)} />
+              ) : (
+                <div className="h-2 rounded-full bg-primary-100" />
+              )}
+              {Number.isFinite(qVeh) && vehUtilises >= qVeh && (
+                <p className="mt-1.5 text-xs text-amber-700">
+                  Limite atteinte — passez au plan Pro pour des véhicules illimités.
+                </p>
+              )}
+            </div>
+
+            {/* SMS */}
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-sm">
+                <span className="flex items-center gap-2 font-medium text-ink">
+                  <MessageSquare className="h-4 w-4 text-slate-400" />
+                  SMS clients ce mois
+                </span>
+                <span className="text-slate-500">
+                  <span className="font-semibold text-ink">{smsUtilises}</span> / {qSms} inclus
+                </span>
+              </div>
+              <Barre pct={Math.min(100, (smsUtilises / Math.max(qSms, 1)) * 100)} />
+              {smsSup > 0 ? (
+                <p className="mt-1.5 text-xs text-amber-700">
+                  {smsSup} SMS hors forfait ce mois ·{" "}
+                  <span className="font-semibold">{coutSup.toFixed(2).replace(".", ",")} €</span>{" "}
+                  facturés en plus ({PRIX_SMS_SUPPLEMENTAIRE.toFixed(2).replace(".", ",")} €/SMS).
+                </p>
+              ) : (
+                <p className="mt-1.5 text-xs text-slate-400">
+                  Au-delà du forfait : {PRIX_SMS_SUPPLEMENTAIRE.toFixed(2).replace(".", ",")} € par SMS.
+                </p>
+              )}
+            </div>
+          </CardBody>
+        </Card>
+      )}
 
       <Card>
         <CardHeader

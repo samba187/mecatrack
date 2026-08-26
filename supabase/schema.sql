@@ -1,4 +1,4 @@
--- Mécatrack — Schéma Supabase complet (tables, RLS, storage)
+-- Fiavo — Schéma Supabase complet (tables, RLS, storage)
 -- À exécuter dans le SQL Editor de Supabase.
 
 -- ── Tables ──────────────────────────────────────────────────────────────────
@@ -20,7 +20,7 @@ create table public.garages (
   mentions_devis text,          -- mentions légales personnalisées
   stripe_customer_id text,
   stripe_subscription_id text,
-  plan text not null default 'trial' check (plan in ('trial', 'essentiel', 'pro', 'expired')),
+  plan text not null default 'trial' check (plan in ('trial', 'atelier', 'pro', 'expired')),
   trial_ends_at timestamptz,
   created_at timestamptz not null default now()
 );
@@ -32,6 +32,15 @@ alter table public.garages add column if not exists lien_avis text;
 alter table public.garages add column if not exists tva_defaut numeric(5,2);
 alter table public.garages add column if not exists conditions_paiement text;
 alter table public.garages add column if not exists mentions_devis text;
+
+-- Consommation SMS par garage et par mois (quota + facturation du dépassement)
+create table if not exists public.sms_usage (
+  garage_id uuid not null references public.garages(id) on delete cascade,
+  mois text not null,               -- format 'YYYY-MM'
+  count integer not null default 0,
+  primary key (garage_id, mois)
+);
+alter table public.sms_usage enable row level security;
 
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),

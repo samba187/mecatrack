@@ -4,7 +4,7 @@ import { LogoIcone } from "@/components/Logo";
 /* Fenêtre de navigateur réaliste qui encadre une capture produit. */
 export function BrowserFrame({
   children,
-  url = "mecatrack.com/dashboard",
+  url = "fiavo.fr/dashboard",
   className,
 }: {
   children: React.ReactNode;
@@ -251,7 +251,7 @@ export function LienMock() {
           <p className="text-[11px] font-semibold text-ink">SMS · Garage Lemoine</p>
           <p className="truncate text-[11px] text-slate-500">
             Votre Peugeot 308 est bien arrivée. Suivez la réparation :
-            mecatrack.com/suivi/•••
+            fiavo.fr/suivi/•••
           </p>
         </div>
       </div>

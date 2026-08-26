@@ -10,8 +10,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${APP_URL}/auth/login`);
   }
   const plan =
-    request.nextUrl.searchParams.get("plan") === "essentiel"
-      ? ("essentiel" as const)
+    request.nextUrl.searchParams.get("plan") === "atelier"
+      ? ("atelier" as const)
       : ("pro" as const);
 
   // Mode démo : simule la souscription sans paiement.

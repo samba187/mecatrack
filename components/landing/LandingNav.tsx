@@ -25,7 +25,7 @@ export function LandingNav() {
       )}
     >
       <div className="mx-auto flex h-[68px] max-w-6xl items-center justify-between px-4 sm:px-6">
-        <Link href="/" aria-label="Mécatrack">
+        <Link href="/" aria-label="Fiavo">
           <Logo />
         </Link>
         <nav className="hidden items-center gap-8 text-[15px] font-medium text-slate-600 md:flex">

@@ -23,11 +23,11 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Mécatrack — Suivi de réparation en temps réel pour garages",
-    template: "%s — Mécatrack",
+    default: "Fiavo — Suivi de réparation en temps réel pour garages",
+    template: "%s — Fiavo",
   },
   description:
-    "Mécatrack permet aux garages indépendants d'envoyer à chaque client un lien de suivi de réparation : photos, statuts en temps réel, devis validés et signés en ligne. Moins d'appels, zéro litige.",
+    "Fiavo permet aux garages indépendants d'envoyer à chaque client un lien de suivi de réparation : photos, statuts en temps réel, devis validés et signés en ligne. Moins d'appels, zéro litige.",
 };
 
 export default function RootLayout({

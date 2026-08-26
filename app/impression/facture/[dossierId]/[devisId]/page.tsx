@@ -168,7 +168,7 @@ export default async function PageImpressionFacture({
               <p className="mt-1">
                 {garage.mentions_devis ??
                   "TVA non applicable, art. 293 B du CGI le cas échéant."}{" "}
-                Document généré via Mécatrack le {formatDateTime(devis.facture_at ?? devis.created_at)}.
+                Document généré via Fiavo le {formatDateTime(devis.facture_at ?? devis.created_at)}.
               </p>
             </div>
             <div className="flex items-end gap-4">

@@ -16,17 +16,17 @@ export function stripe(): Stripe {
   return client;
 }
 
-export function priceIdPourPlan(plan: "essentiel" | "pro"): string {
+export function priceIdPourPlan(plan: "atelier" | "pro"): string {
   const id =
     plan === "pro"
       ? process.env.STRIPE_PRICE_ID_PRO
-      : process.env.STRIPE_PRICE_ID_ESSENTIEL;
+      : process.env.STRIPE_PRICE_ID_ATELIER;
   if (!id) throw new Error(`Price Stripe manquant pour le plan ${plan}`);
   return id;
 }
 
-export function planPourPriceId(priceId: string): "essentiel" | "pro" | null {
+export function planPourPriceId(priceId: string): "atelier" | "pro" | null {
   if (priceId === process.env.STRIPE_PRICE_ID_PRO) return "pro";
-  if (priceId === process.env.STRIPE_PRICE_ID_ESSENTIEL) return "essentiel";
+  if (priceId === process.env.STRIPE_PRICE_ID_ATELIER) return "atelier";
   return null;
 }

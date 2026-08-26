@@ -42,7 +42,7 @@ export default async function DashboardLayout({
       <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
           <div className="flex items-center gap-8">
-            <Link href="/dashboard/dossiers" aria-label="Accueil Mécatrack">
+            <Link href="/dashboard/dossiers" aria-label="Accueil Fiavo">
               <Logo />
             </Link>
             <nav className="hidden items-center gap-1 sm:flex">

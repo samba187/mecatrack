@@ -1,4 +1,4 @@
-# Mécatrack
+# Fiavo
 
 SaaS de suivi de réparation en temps réel pour garages automobiles indépendants.
 Le garagiste gère ses dossiers ; le client suit sa réparation via un lien unique
@@ -29,8 +29,9 @@ C'est aussi l'environnement idéal pour **faire une démonstration à un garagis
    Editor, puis renseigner les 3 variables `SUPABASE`. Désactiver la
    confirmation d'email dans Auth → Settings si vous voulez une inscription
    immédiate.
-2. **Stripe** : créer deux produits (« Mécatrack Essentiel » 19 €/mois,
-   « Mécatrack Pro » 39 €/mois), renseigner les `STRIPE_PRICE_ID_*`, la clé
+2. **Stripe** : créer deux produits (« Fiavo Atelier » 34 €/mois,
+   « Fiavo Pro » 59 €/mois), renseigner `STRIPE_PRICE_ID_ATELIER` /
+   `STRIPE_PRICE_ID_PRO`, la clé
    secrète, et configurer le webhook `https://votredomaine/api/webhooks/stripe`
    (événements : `checkout.session.completed`,
    `customer.subscription.updated`, `customer.subscription.deleted`,
@@ -44,11 +45,14 @@ automatiquement et l'application utilise les vrais services.
 
 ## Modèle tarifaire
 
-| Formule | Prix | Contenu |
-|---|---|---|
-| Essai | 14 jours gratuits | Toutes les fonctionnalités Pro, sans carte bancaire |
-| Essentiel | 19 €/mois | Dossiers illimités, suivi, photos (10/dossier), devis signés, messagerie |
-| Pro | 39 €/mois | + SMS automatiques, 20 photos/dossier, logo, retrait du branding |
+| Formule | Prix | Véhicules/mois | SMS inclus | Contenu |
+|---|---|---|---|---|
+| Essai | 14 jours gratuits | illimité | 300 | Toutes les fonctionnalités Pro, sans carte bancaire |
+| Atelier | 34 €/mois | 30 | 120 | Suivi, photos (10/dossier), devis & factures signés, messagerie |
+| Pro | 59 €/mois | illimité | 300 | + 20 photos/dossier, logo, retrait du branding, support prioritaire |
+
+SMS au-delà du quota : **0,15 €/SMS**. Les compteurs (véhicules, SMS) se
+remettent à zéro le 1er de chaque mois.
 
 À l'expiration de l'essai sans abonnement : compte en lecture seule
 (les dossiers restent consultables, la création est suspendue).

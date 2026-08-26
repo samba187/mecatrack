@@ -208,7 +208,7 @@ export default async function PageSuivi({
               className="inline-flex items-center gap-1.5 text-xs text-slate-400 transition-colors hover:text-slate-600"
             >
               <LogoIcone className="h-4 w-4 rounded" />
-              Propulsé par Mécatrack — le suivi de réparation en temps réel
+              Propulsé par Fiavo — le suivi de réparation en temps réel
             </Link>
           </footer>
         )}

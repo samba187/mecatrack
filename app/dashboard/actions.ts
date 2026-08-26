@@ -306,9 +306,12 @@ export async function actionEnvoyerLienSms(
   const garage = await garageOuErreur();
   const { peutEnvoyerSms } = await import("@/lib/plans");
   if (!peutEnvoyerSms(garage)) {
-    return { error: "L'envoi de SMS est réservé au plan Pro." };
+    return {
+      error:
+        "Votre essai est terminé — choisissez une formule pour envoyer des SMS.",
+    };
   }
-  const { getDossierComplet } = await import("@/lib/db");
+  const { getDossierComplet, incrementerSmsCeMois } = await import("@/lib/db");
   const complet = await getDossierComplet(garage, dossierId);
   if (!complet) return { error: "Dossier introuvable." };
   if (!complet.dossier.client_telephone) {
@@ -316,6 +319,7 @@ export async function actionEnvoyerLienSms(
   }
   const { smsCreationDossier } = await import("@/lib/notifications");
   await smsCreationDossier(garage, complet.dossier);
+  await incrementerSmsCeMois(garage);
   return { ok: true };
 }
 

@@ -23,6 +23,7 @@ interface DemoDb {
   notifications: Notification[];
   compteurDevis: number;
   compteurFacture: number;
+  smsParMois: Record<string, number>;
 }
 
 function ilYa(jours: number, heures = 0): string {
@@ -475,6 +476,9 @@ function seed(): DemoDb {
     },
   ];
 
+  const now = new Date();
+  const moisCle = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+
   return {
     garage,
     dossiers,
@@ -486,6 +490,8 @@ function seed(): DemoDb {
     notifications,
     compteurDevis: 34,
     compteurFacture: 6,
+    // Consommation SMS du mois (démo : déjà 47 envoyés sur le quota).
+    smsParMois: { [moisCle]: 47 } as Record<string, number>,
   };
 }
 

@@ -39,7 +39,7 @@ export async function envoyerEmail(
   try {
     const { Resend } = await import("resend");
     await new Resend(key).emails.send({
-      from: process.env.EMAIL_FROM ?? "Mécatrack <notifications@mecatrack.com>",
+      from: process.env.EMAIL_FROM ?? "Fiavo <notifications@fiavo.fr>",
       to: vers,
       subject: sujet,
       html,
@@ -149,7 +149,7 @@ export async function smsGarageDevisRepondu(
   const verdict = devis.statut === "accepte" ? "ACCEPTÉ et signé" : "REFUSÉ";
   await envoyerSms(
     garage.telephone,
-    `Mécatrack : ${dossier.client_nom} a ${verdict} le devis ${devis.numero} (${devis.montant_ttc.toFixed(2).replace(".", ",")} € TTC) pour la ${dossier.vehicule_marque} ${dossier.vehicule_immat}.`
+    `Fiavo : ${dossier.client_nom} a ${verdict} le devis ${devis.numero} (${devis.montant_ttc.toFixed(2).replace(".", ",")} € TTC) pour la ${dossier.vehicule_marque} ${dossier.vehicule_immat}.`
   );
 }
 
@@ -162,7 +162,7 @@ export async function smsGarageMessage(
   const extrait = contenu.length > 90 ? `${contenu.slice(0, 90)}…` : contenu;
   await envoyerSms(
     garage.telephone,
-    `Mécatrack : nouveau message de ${dossier.client_nom} (${dossier.vehicule_immat}) : "${extrait}"`
+    `Fiavo : nouveau message de ${dossier.client_nom} (${dossier.vehicule_immat}) : "${extrait}"`
   );
 }
 
@@ -226,7 +226,7 @@ export async function emailBienvenue(garage: Garage, urlDashboard: string) {
   if (!garage.email) return;
   await envoyerEmail(
     garage.email,
-    "Bienvenue sur Mécatrack — votre essai de 14 jours a commencé",
+    "Bienvenue sur Fiavo — votre essai de 14 jours a commencé",
     gabarit(
       `Bienvenue, ${garage.nom}`,
       `<p>Votre essai gratuit de 14 jours vient de commencer, avec toutes les fonctionnalités Pro, sans carte bancaire.</p>
@@ -246,12 +246,12 @@ export async function emailFinEssai(
   await envoyerEmail(
     garage.email,
     dernier
-      ? "Votre essai Mécatrack est terminé"
-      : `Plus que ${joursRestants} jours d'essai Mécatrack`,
+      ? "Votre essai Fiavo est terminé"
+      : `Plus que ${joursRestants} jours d'essai Fiavo`,
     gabarit(
       dernier ? "Votre essai est terminé" : `Votre essai se termine dans ${joursRestants} jours`,
       `<p>${dernier ? "Votre période d'essai est arrivée à son terme. Vos dossiers sont conservés, mais la création de nouveaux dossiers est suspendue." : "Après l'essai, choisissez la formule qui vous convient pour continuer sans interruption."}</p>
-       <p>Essentiel à 19 &euro;/mois ou Pro à 39 &euro;/mois, sans engagement, résiliable en un clic.</p>`,
+       <p>Atelier à 34 &euro;/mois ou Pro à 59 &euro;/mois, sans engagement, résiliable en un clic.</p>`,
       { label: "Choisir ma formule", url: urlCompte }
     )
   );
@@ -261,10 +261,10 @@ export async function emailPaiementEchoue(garage: Garage, urlPortail: string) {
   if (!garage.email) return;
   await envoyerEmail(
     garage.email,
-    "Échec du paiement de votre abonnement Mécatrack",
+    "Échec du paiement de votre abonnement Fiavo",
     gabarit(
       "Échec de paiement",
-      `<p>Le prélèvement de votre abonnement Mécatrack n'a pas abouti. Merci de mettre à jour votre moyen de paiement pour conserver l'accès à toutes les fonctionnalités.</p>`,
+      `<p>Le prélèvement de votre abonnement Fiavo n'a pas abouti. Merci de mettre à jour votre moyen de paiement pour conserver l'accès à toutes les fonctionnalités.</p>`,
       { label: "Mettre à jour mon paiement", url: urlPortail }
     )
   );

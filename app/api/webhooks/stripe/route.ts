@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const garageId = session.metadata?.garage_id;
-      const plan = session.metadata?.plan === "essentiel" ? "essentiel" : "pro";
+      const plan = session.metadata?.plan === "atelier" ? "atelier" : "pro";
       if (garageId) {
         await admin
           .from("garages")

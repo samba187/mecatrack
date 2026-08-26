@@ -267,7 +267,7 @@ function Methode() {
           </h2>
           <p className="mt-4 text-lg text-slate-600">
             Des boutons évidents, de grandes zones tactiles. Si vous savez
-            envoyer un SMS, vous savez utiliser Mécatrack.
+            envoyer un SMS, vous savez utiliser Fiavo.
           </p>
         </Reveal>
 
@@ -314,7 +314,7 @@ function Gagnant() {
           <p className="mx-auto mt-4 max-w-2xl text-lg leading-relaxed text-slate-600">
             Les concessions ont des portails clients à plusieurs milliers
             d&apos;euros par an. Vos clients y sont habitués — et ne comprennent
-            pas pourquoi leur garage de quartier reste silencieux. Mécatrack vous
+            pas pourquoi leur garage de quartier reste silencieux. Fiavo vous
             met à leur niveau, pour le prix d&apos;un plein.
           </p>
         </Reveal>
@@ -368,7 +368,7 @@ function Tarifs() {
         </Reveal>
 
         <div className="mx-auto mt-14 grid max-w-3xl items-center gap-6 md:grid-cols-2">
-          {(["essentiel", "pro"] as const).map((id) => {
+          {(["atelier", "pro"] as const).map((id) => {
             const plan = PLANS[id];
             const pro = id === "pro";
             return (
@@ -442,7 +442,7 @@ function Faq() {
     },
     {
       q: "C'est compliqué à prendre en main ?",
-      r: "Créer un dossier prend deux minutes : nom du client, véhicule, motif. Ensuite tout se fait d'un geste — une photo, un changement de statut. Si vous savez envoyer un SMS, vous savez utiliser Mécatrack.",
+      r: "Créer un dossier prend deux minutes : nom du client, véhicule, motif. Ensuite tout se fait d'un geste — une photo, un changement de statut. Si vous savez envoyer un SMS, vous savez utiliser Fiavo.",
     },
     {
       q: "La signature électronique a-t-elle une valeur en cas de litige ?",
@@ -458,7 +458,7 @@ function Faq() {
     },
     {
       q: "Ça remplace mon logiciel de devis et factures ?",
-      r: "Non, et c'est voulu. Mécatrack complète votre outil de gestion : il s'occupe de la communication et des validations pendant la réparation. Vous continuez à facturer comme aujourd'hui.",
+      r: "Non, et c'est voulu. Fiavo complète votre outil de gestion : il s'occupe de la communication et des validations pendant la réparation. Vous continuez à facturer comme aujourd'hui.",
     },
   ];
   return (
@@ -555,7 +555,7 @@ function PiedDePage() {
             Connexion
           </Link>
         </nav>
-        <p className="text-sm text-slate-400">© {new Date().getFullYear()} Mécatrack</p>
+        <p className="text-sm text-slate-400">© {new Date().getFullYear()} Fiavo</p>
       </div>
     </footer>
   );

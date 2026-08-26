@@ -1,4 +1,4 @@
-export type Plan = "trial" | "essentiel" | "pro" | "expired";
+export type Plan = "trial" | "atelier" | "pro" | "expired";
 
 export type Statut =
   | "en_attente"

@@ -19,7 +19,7 @@ export default function PageCgu() {
           <section>
             <h2 className="font-semibold text-ink">1. Le service</h2>
             <p className="mt-1.5 leading-relaxed">
-              Mécatrack est un service de suivi de réparation destiné aux
+              Fiavo est un service de suivi de réparation destiné aux
               professionnels de la réparation automobile. Il permet de partager
               avec le client final l&apos;avancement d&apos;une intervention,
               des photos, et de recueillir la validation de devis
@@ -59,13 +59,13 @@ export default function PageCgu() {
           <section>
             <h2 className="font-semibold text-ink">5. Contact</h2>
             <p className="mt-1.5 leading-relaxed">
-              Pour toute question : contact@mecatrack.com
+              Pour toute question : contact@fiavo.fr
             </p>
           </section>
         </div>
         <p className="mt-10 text-sm text-slate-400">
           Conditions générales susceptibles d&apos;évoluer. Pour toute
-          question : contact@mecatrack.com
+          question : contact@fiavo.fr
         </p>
       </main>
     </div>

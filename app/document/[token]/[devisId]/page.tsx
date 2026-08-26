@@ -186,7 +186,7 @@ export default async function PageDocumentClient({
               </p>
               {garage.conditions_paiement && <p>{garage.conditions_paiement}</p>}
               <p>
-                Document généré via Mécatrack le {formatDateTime(dateDoc)}.
+                Document généré via Fiavo le {formatDateTime(dateDoc)}.
               </p>
             </div>
             <div className="flex items-end gap-4">

@@ -50,7 +50,7 @@ export function Logo({
           clair ? "text-white" : "text-primary-900"
         )}
       >
-        Mécatrack
+        Fiavo
       </span>
     </span>
   );
