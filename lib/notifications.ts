@@ -178,11 +178,11 @@ export async function smsGarageMessage(
 function gabarit(titre: string, corps: string, cta?: { label: string; url: string }): string {
   return `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
   <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-    <div style="font-size:18px;font-weight:bold;color:#1B3A6B;margin-bottom:24px">Fiavo</div>
+    <div style="font-size:18px;font-weight:bold;color:#1A2338;margin-bottom:24px">Fiavo</div>
     <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:32px">
       <h1 style="font-size:20px;margin:0 0 16px">${titre}</h1>
       <div style="font-size:15px;line-height:1.6;color:#334155">${corps}</div>
-      ${cta ? `<a href="${cta.url}" style="display:inline-block;margin-top:24px;background:#1B3A6B;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px">${cta.label}</a>` : ""}
+      ${cta ? `<a href="${cta.url}" style="display:inline-block;margin-top:24px;background:#1A2338;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px">${cta.label}</a>` : ""}
     </div>
     <p style="font-size:12px;color:#94A3B8;margin-top:24px">Fiavo — Suivi de r&eacute;paration pour garages ind&eacute;pendants</p>
   </div>
@@ -221,7 +221,7 @@ export async function emailNouveauMessage(
     gabarit(
       "Nouveau message client",
       `<p><strong>${dossier.client_nom}</strong> — ${dossier.vehicule_marque} ${dossier.vehicule_modele} (${dossier.vehicule_immat}) :</p>
-       <blockquote style="margin:16px 0;padding:12px 16px;background:#F1F5F9;border-left:3px solid #1B3A6B;border-radius:4px">${contenu}</blockquote>`,
+       <blockquote style="margin:16px 0;padding:12px 16px;background:#F1F5F9;border-left:3px solid #1A2338;border-radius:4px">${contenu}</blockquote>`,
       { label: "Répondre dans le dossier", url: urlDossier }
     )
   );
