@@ -14,33 +14,96 @@ function echapperHtml(s: string): string {
  */
 
 /**
- * Envoie un SMS. Renvoie true si le message est bien parti (ou simulé en
- * l'absence de clés) — false en cas d'échec, pour ne pas décompter du quota
- * du garage un SMS qui n'a jamais été délivré.
+ * Nom d'expéditeur affiché sur le téléphone du client. Contrainte commune aux
+ * opérateurs : 11 caractères alphanumériques maximum, sans accent ni symbole.
+ */
+function expediteurSms(): string {
+  const brut = process.env.SMS_SENDER_ID ?? "Fiavo";
+  const propre = brut
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .replace(/[^A-Za-z0-9]/g, "")
+    .slice(0, 11);
+  return propre || "Fiavo";
+}
+
+/** Envoi via Brevo (API HTTP simple, tarif France plus bas que Twilio). */
+async function envoyerSmsBrevo(
+  cle: string,
+  destinataire: string,
+  corps: string
+): Promise<boolean> {
+  const reponse = await fetch("https://api.brevo.com/v3/transactionalSMS/send", {
+    method: "POST",
+    headers: {
+      "api-key": cle,
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: expediteurSms(),
+      recipient: destinataire,
+      content: corps,
+      type: "transactional",
+    }),
+  });
+  if (!reponse.ok) {
+    const detail = await reponse.text().catch(() => "");
+    throw new Error(`Brevo ${reponse.status} ${detail.slice(0, 200)}`);
+  }
+  return true;
+}
+
+/** Envoi via Twilio (repli si Brevo n'est pas configuré). */
+async function envoyerSmsTwilio(
+  sid: string,
+  token: string,
+  from: string,
+  destinataire: string,
+  corps: string
+): Promise<boolean> {
+  const twilio = (await import("twilio")).default;
+  await twilio(sid, token).messages.create({
+    to: destinataire,
+    from,
+    body: corps,
+  });
+  return true;
+}
+
+/**
+ * Envoie un SMS via le fournisseur configuré (Brevo en priorité, sinon
+ * Twilio). Renvoie true si le message est bien parti (ou simulé en l'absence
+ * de clés) — false en cas d'échec, pour ne pas décompter du quota du garage
+ * un SMS qui n'a jamais été délivré.
  */
 export async function envoyerSms(
   vers: string,
   corps: string
 ): Promise<boolean> {
+  const destinataire = normaliserTel(vers);
+  const brevo = process.env.BREVO_API_KEY;
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_SENDER_ID ?? process.env.TWILIO_PHONE_NUMBER;
-  if (!sid || !token || !from) {
-    console.log(`[SMS simulé] → ${vers} : ${corps}`);
-    return true;
-  }
+  const from =
+    process.env.TWILIO_SENDER_ID ??
+    process.env.TWILIO_PHONE_NUMBER ??
+    expediteurSms();
+
   try {
-    const twilio = (await import("twilio")).default;
-    await twilio(sid, token).messages.create({
-      to: normaliserTel(vers),
-      from,
-      body: corps,
-    });
-    return true;
+    if (brevo) {
+      return await envoyerSmsBrevo(brevo, destinataire, corps);
+    }
+    if (sid && token) {
+      return await envoyerSmsTwilio(sid, token, from, destinataire, corps);
+    }
   } catch (e) {
     console.error("Échec envoi SMS", e);
     return false;
   }
+
+  console.log(`[SMS simulé] → ${destinataire} : ${corps}`);
+  return true;
 }
 
 export async function envoyerEmail(
