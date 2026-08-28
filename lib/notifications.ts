@@ -13,13 +13,21 @@ function echapperHtml(s: string): string {
  * les envois sont simplement journalisés — l'application reste fonctionnelle.
  */
 
-export async function envoyerSms(vers: string, corps: string): Promise<void> {
+/**
+ * Envoie un SMS. Renvoie true si le message est bien parti (ou simulé en
+ * l'absence de clés) — false en cas d'échec, pour ne pas décompter du quota
+ * du garage un SMS qui n'a jamais été délivré.
+ */
+export async function envoyerSms(
+  vers: string,
+  corps: string
+): Promise<boolean> {
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
-  const from = process.env.TWILIO_PHONE_NUMBER;
+  const from = process.env.TWILIO_SENDER_ID ?? process.env.TWILIO_PHONE_NUMBER;
   if (!sid || !token || !from) {
     console.log(`[SMS simulé] → ${vers} : ${corps}`);
-    return;
+    return true;
   }
   try {
     const twilio = (await import("twilio")).default;
@@ -28,8 +36,10 @@ export async function envoyerSms(vers: string, corps: string): Promise<void> {
       from,
       body: corps,
     });
+    return true;
   } catch (e) {
     console.error("Échec envoi SMS", e);
+    return false;
   }
 }
 
@@ -65,9 +75,12 @@ function normaliserTel(tel: string): string {
 
 // ── SMS client selon l'événement ────────────────────────────────────────────
 
-export async function smsCreationDossier(garage: Garage, dossier: Dossier) {
-  if (!dossier.client_telephone) return;
-  await envoyerSms(
+export async function smsCreationDossier(
+  garage: Garage,
+  dossier: Dossier
+): Promise<boolean> {
+  if (!dossier.client_telephone) return false;
+  return envoyerSms(
     dossier.client_telephone,
     `Bonjour ${dossier.client_nom}, votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} est bien arrivé au garage ${garage.nom}. Suivez l'avancement ici : ${lienSuivi(dossier.token_public)}`
   );
@@ -77,8 +90,8 @@ export async function smsChangementStatut(
   garage: Garage,
   dossier: Dossier,
   statut: Statut
-) {
-  if (!dossier.client_telephone) return;
+): Promise<boolean> {
+  if (!dossier.client_telephone) return false;
   const lien = lienSuivi(dossier.token_public);
   const vehicule = `${dossier.vehicule_marque} ${dossier.vehicule_modele}`;
   const corps: Partial<Record<Statut, string>> = {
@@ -91,12 +104,16 @@ export async function smsChangementStatut(
       : `Merci d'avoir choisi ${garage.nom} pour votre ${vehicule} ! À bientôt.`,
   };
   const message = corps[statut];
-  if (message) await envoyerSms(dossier.client_telephone, message);
+  if (!message) return false;
+  return envoyerSms(dossier.client_telephone, message);
 }
 
-export async function smsNouveauDevis(garage: Garage, dossier: Dossier) {
-  if (!dossier.client_telephone) return;
-  await envoyerSms(
+export async function smsNouveauDevis(
+  garage: Garage,
+  dossier: Dossier
+): Promise<boolean> {
+  if (!dossier.client_telephone) return false;
+  return envoyerSms(
     dossier.client_telephone,
     `${garage.nom} : un devis pour des travaux supplémentaires sur votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} attend votre validation : ${lienSuivi(dossier.token_public)}`
   );
@@ -109,13 +126,13 @@ export async function smsDocument(
   dossier: Dossier,
   devis: Devis,
   lien: string
-) {
-  if (!dossier.client_telephone) return;
+): Promise<boolean> {
+  if (!dossier.client_telephone) return false;
   const facture = Boolean(devis.facture_numero);
   const quoi = facture
     ? `votre facture ${devis.facture_numero}`
     : `votre devis ${devis.numero}`;
-  await envoyerSms(
+  return envoyerSms(
     dossier.client_telephone,
     `${garage.nom} : ${quoi} pour votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} est disponible ici : ${lien}`
   );

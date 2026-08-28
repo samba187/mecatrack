@@ -506,8 +506,9 @@ export async function creerDossier(
   }
 
   if (peutEnvoyerSms(garage) && dossier.client_telephone) {
-    await smsCreationDossier(garage, dossier);
-    await incrementerSmsCeMois(garage);
+    if (await smsCreationDossier(garage, dossier)) {
+      await incrementerSmsCeMois(garage);
+    }
   }
   return dossier;
 }
@@ -602,8 +603,9 @@ export async function changerStatut(
   }
 
   if (peutEnvoyerSms(garage) && dossier.client_telephone) {
-    await smsChangementStatut(garage, dossier, nouveau);
-    await incrementerSmsCeMois(garage);
+    if (await smsChangementStatut(garage, dossier, nouveau)) {
+      await incrementerSmsCeMois(garage);
+    }
   }
 }
 
@@ -806,8 +808,9 @@ export async function creerDevis(
     peutEnvoyerSms(garage) &&
     dossier.client_telephone
   ) {
-    await smsNouveauDevis(garage, dossier);
-    await incrementerSmsCeMois(garage);
+    if (await smsNouveauDevis(garage, dossier)) {
+      await incrementerSmsCeMois(garage);
+    }
   }
   return devis;
 }
@@ -868,8 +871,9 @@ export async function relancerDevis(
   if (devis.statut !== "en_attente")
     throw new Error("Ce devis a déjà reçu une réponse.");
   if (peutEnvoyerSms(garage) && complet.dossier.client_telephone) {
-    await smsNouveauDevis(garage, complet.dossier);
-    await incrementerSmsCeMois(garage);
+    if (await smsNouveauDevis(garage, complet.dossier)) {
+      await incrementerSmsCeMois(garage);
+    }
   }
 }
 
@@ -889,10 +893,10 @@ export async function envoyerDocumentClient(
     );
   }
   const lien = lienDocument(complet.dossier.token_public, devisId);
-  const sms = Boolean(complet.dossier.client_telephone) && peutEnvoyerSms(garage);
+  let sms = Boolean(complet.dossier.client_telephone) && peutEnvoyerSms(garage);
   if (sms) {
-    await smsDocument(garage, complet.dossier, devis, lien);
-    await incrementerSmsCeMois(garage);
+    sms = await smsDocument(garage, complet.dossier, devis, lien);
+    if (sms) await incrementerSmsCeMois(garage);
   }
   const email = Boolean(complet.dossier.client_email);
   if (email) await emailDocument(garage, complet.dossier, devis, lien);

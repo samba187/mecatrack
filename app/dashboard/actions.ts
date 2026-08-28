@@ -336,7 +336,9 @@ export async function actionEnvoyerLienSms(
     return { error: "Aucun numéro de téléphone renseigné pour ce client." };
   }
   const { smsCreationDossier } = await import("@/lib/notifications");
-  await smsCreationDossier(garage, complet.dossier);
+  if (!(await smsCreationDossier(garage, complet.dossier))) {
+    return { error: "L'envoi du SMS a échoué, réessayez." };
+  }
   await incrementerSmsCeMois(garage);
   return { ok: true };
 }
