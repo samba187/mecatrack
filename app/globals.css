@@ -106,8 +106,14 @@
     display: none !important;
   }
   @page {
-    margin: 14mm;
+    margin: 12mm;
     size: A4;
+  }
+  /* Tous les espacements Tailwind sont en rem : réduire la base compacte le
+     document de façon homogène, pour qu'un devis ou une facture tienne sur
+     une seule page sans casser la mise en page. */
+  html {
+    font-size: 12.5px;
   }
   html,
   body {
@@ -116,8 +122,22 @@
   .print-sheet {
     box-shadow: none !important;
     margin: 0 !important;
-    max-width: none !important;
-    width: 100% !important;
+    /* Largeur A4 utile (210mm - 2 x 12mm de marge) imposée : sans cela, une
+       impression lancée depuis un téléphone reprend la mise en page mobile
+       (colonne étroite), le document double de hauteur et déborde sur une
+       deuxième page. */
+    width: 186mm !important;
+    max-width: 186mm !important;
+    /* La marge @page fait déjà office de marge : on retire celle de l'écran. */
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  /* Ne pas couper le tableau, les totaux ou le bloc signature entre 2 pages. */
+  .print-sheet table,
+  .print-sheet tr,
+  .print-sheet dl {
+    page-break-inside: avoid;
+    break-inside: avoid;
   }
 }
 

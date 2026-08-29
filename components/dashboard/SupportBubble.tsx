@@ -39,7 +39,8 @@ export function SupportBubble({
   };
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 flex flex-col items-end gap-3 print:hidden">
+    // Sur mobile, remontée au-dessus de la barre d'onglets fixe.
+    <div className="fixed bottom-[76px] right-4 z-50 flex flex-col items-end gap-3 sm:bottom-5 sm:right-5 print:hidden">
       {ouvert && (
         <div className="w-[360px] max-w-[calc(100vw-2.5rem)] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
           <div className="flex items-start justify-between gap-3 bg-primary-800 px-5 py-4 text-white">

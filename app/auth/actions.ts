@@ -117,6 +117,9 @@ export async function actionInscription(
   // Confirmation d'email requise (aucune session ouverte) : on invite le
   // garagiste à valider son adresse avant de pouvoir se connecter.
   if (!data.session) {
+    // Le compte réel existe : on quitte la démo pour ne pas laisser le
+    // garagiste devant des données fictives après confirmation.
+    quitterDemo();
     return {
       info: `Compte créé pour ${nom_garage}. Un email de confirmation vient d'être envoyé à ${email} : cliquez sur le lien pour activer votre compte, puis connectez-vous.`,
     };

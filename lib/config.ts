@@ -22,7 +22,15 @@ export const COOKIE_DEMO = "mt_demo";
 export function estDemo(): boolean {
   if (DEMO_MODE) return true;
   try {
-    return cookies().get(COOKIE_DEMO)?.value === "1";
+    const jar = cookies();
+    if (jar.get(COOKIE_DEMO)?.value !== "1") return false;
+    // Une session authentifiée prime toujours sur la démo : sans cela, un
+    // cookie de démo oublié ferait voir le garage fictif à un garagiste
+    // pourtant connecté (données en mémoire, actions sans effet réel).
+    const connecte = jar
+      .getAll()
+      .some((c) => /^sb-.+-auth-token(\.\d+)?$/.test(c.name));
+    return !connecte;
   } catch {
     return false;
   }

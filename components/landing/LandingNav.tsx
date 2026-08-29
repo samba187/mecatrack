@@ -42,13 +42,13 @@ export function LandingNav() {
         <div className="flex items-center gap-2.5">
           <Link
             href="/auth/login"
-            className="hidden rounded-lg px-3.5 py-2 text-[15px] font-medium text-slate-600 transition-colors hover:text-primary-800 sm:block"
+            className="rounded-lg px-2.5 py-2 text-[15px] font-medium text-slate-600 transition-colors hover:text-primary-800 sm:px-3.5"
           >
             Connexion
           </Link>
           <Link
             href="/auth/register"
-            className="rounded-lg bg-primary-800 px-4 py-2.5 text-[15px] font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-md"
+            className="whitespace-nowrap rounded-lg bg-primary-800 px-3.5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:-translate-y-0.5 hover:bg-primary-700 hover:shadow-md sm:px-4 sm:text-[15px]"
           >
             Essai gratuit
           </Link>
