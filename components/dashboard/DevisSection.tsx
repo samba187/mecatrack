@@ -2,13 +2,13 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import Link from "next/link";
 import {
   AlertCircle,
   Check,
   CheckCircle2,
   Clock,
   Plus,
+  Download,
   Printer,
   Receipt,
   RefreshCw,
@@ -410,28 +410,38 @@ function DevisCarte({ devis, dossierId }: { devis: Devis; dossierId: string }) {
             {formatEuros(devis.montant_ttc)}
             <span className="ml-1 text-xs font-normal text-slate-400">TTC</span>
           </span>
-          <Link
-            href={`/impression/devis/${dossierId}/${devis.id}`}
+          {/* PDF généré à la volée, jamais stocké côté serveur. */}
+          <a
+            href={`/api/pdf/${dossierId}/${devis.id}`}
             target="_blank"
+            rel="noreferrer"
             className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-primary-300 hover:text-primary-700"
           >
             <Printer className="h-3.5 w-3.5" />
-            Devis PDF
-          </Link>
+            Voir le PDF
+          </a>
+          <a
+            href={`/api/pdf/${dossierId}/${devis.id}?dl=1`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 transition-colors hover:border-primary-300 hover:text-primary-700"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Télécharger
+          </a>
           <BoutonEnvoyerClient dossierId={dossierId} devisId={devis.id} />
           {devis.statut === "en_attente" && (
             <BoutonRelance dossierId={dossierId} devisId={devis.id} />
           )}
           {devis.statut === "accepte" &&
             (devis.facture_numero ? (
-              <Link
-                href={`/impression/facture/${dossierId}/${devis.id}`}
+              <a
+                href={`/api/pdf/${dossierId}/${devis.id}`}
                 target="_blank"
+                rel="noreferrer"
                 className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-green-50 px-2.5 py-1.5 text-xs font-semibold text-green-800 transition-colors hover:bg-green-100"
               >
                 <Receipt className="h-3.5 w-3.5" />
                 Facture {devis.facture_numero}
-              </Link>
+              </a>
             ) : (
               <BoutonFacture dossierId={dossierId} devisId={devis.id} />
             ))}

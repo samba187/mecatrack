@@ -1,5 +1,5 @@
 import "server-only";
-import { randomUUID } from "crypto";
+import { randomBytes, randomUUID } from "crypto";
 import { estDemo, APP_URL, lienDocument } from "./config";
 import { demoDb } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
@@ -432,6 +432,22 @@ function trierAncien<T extends { created_at: string }>(arr: T[]): T[] {
   );
 }
 
+/**
+ * Jeton du lien de suivi envoyé par SMS. Court et sans ambiguïté visuelle
+ * (ni 0/O ni 1/l/I) : un lien compact inspire confiance au client et tient
+ * dans un seul segment SMS, là où un UUID de 36 caractères fait « spam ».
+ * 12 caractères sur cet alphabet ≈ 10^19 combinaisons : non devinable.
+ */
+function tokenSuivi(): string {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const octets = randomBytes(12);
+  let out = "";
+  for (let i = 0; i < octets.length; i++) {
+    out += alphabet[octets[i] % alphabet.length];
+  }
+  return out;
+}
+
 export interface NouveauDossier {
   client_nom: string;
   client_telephone: string | null;
@@ -468,7 +484,7 @@ export async function creerDossier(
   const dossier: Dossier = {
     id: randomUUID(),
     garage_id: garage.id,
-    token_public: randomUUID(),
+    token_public: tokenSuivi(),
     statut: "en_attente",
     date_entree: maintenant,
     date_livraison: null,
@@ -1116,19 +1132,27 @@ export async function incrementerSmsCeMois(
     return;
   }
   const admin = supabaseAdmin();
-  const { data } = await admin
+  const { data, error: errLecture } = await admin
     .from("sms_usage")
     .select("count")
     .eq("garage_id", garage.id)
     .eq("mois", mois)
     .maybeSingle();
+  if (errLecture) {
+    // Typiquement : la table sms_usage n'a pas encore été créée dans Supabase.
+    console.error("sms_usage — lecture impossible", errLecture.message);
+    return;
+  }
   const nouveau = (((data?.count as number | undefined) ?? 0) + n);
-  await admin
+  const { error: errEcriture } = await admin
     .from("sms_usage")
     .upsert(
       { garage_id: garage.id, mois, count: nouveau },
       { onConflict: "garage_id,mois" }
     );
+  if (errEcriture) {
+    console.error("sms_usage — écriture impossible", errEcriture.message);
+  }
 }
 
 // ── Espace documentaire : tous les devis du garage ──────────────────────────
