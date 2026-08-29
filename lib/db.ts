@@ -1111,7 +1111,11 @@ export async function smsCeMois(garage: Garage): Promise<number> {
   if (estDemo()) {
     return demoDb().smsParMois[mois] ?? 0;
   }
-  const { data } = await supabaseServer()
+  // Lecture via le service_role : la table sms_usage a RLS activé sans policy
+  // de lecture, donc la session utilisateur renverrait toujours 0. Le compteur
+  // est écrit par le service_role, on le lit de la même manière (filtré sur le
+  // garage courant côté serveur — aucun accès élargi).
+  const { data } = await supabaseAdmin()
     .from("sms_usage")
     .select("count")
     .eq("garage_id", garage.id)
