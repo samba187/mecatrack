@@ -18,5 +18,8 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/auth/:path*"],
+  // Inclut /api : sans le rafraîchissement de session du middleware, une route
+  // API voyait l'utilisateur comme déconnecté dès que le jeton d'accès expirait
+  // (~1 h), faisant échouer génération de PDF et incrément du compteur SMS.
+  matcher: ["/dashboard/:path*", "/auth/:path*", "/api/:path*"],
 };
