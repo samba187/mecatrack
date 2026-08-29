@@ -22,15 +22,12 @@ export const COOKIE_DEMO = "mt_demo";
 export function estDemo(): boolean {
   if (DEMO_MODE) return true;
   try {
-    const jar = cookies();
-    if (jar.get(COOKIE_DEMO)?.value !== "1") return false;
-    // Une session authentifiée prime toujours sur la démo : sans cela, un
-    // cookie de démo oublié ferait voir le garage fictif à un garagiste
-    // pourtant connecté (données en mémoire, actions sans effet réel).
-    const connecte = jar
-      .getAll()
-      .some((c) => /^sb-.+-auth-token(\.\d+)?$/.test(c.name));
-    return !connecte;
+    // La démo est un choix explicite (« Explorer la démo » pose ce cookie) et
+    // fait autorité tant qu'il est présent : c'est la connexion et
+    // l'inscription qui le retirent (quitterDemo), pas la simple présence d'un
+    // ancien cookie de session — sans quoi une session expirée qui traîne
+    // renverrait vers la page de connexion depuis la démo.
+    return cookies().get(COOKIE_DEMO)?.value === "1";
   } catch {
     return false;
   }
