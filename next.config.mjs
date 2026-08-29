@@ -12,6 +12,7 @@ const nextConfig = {
     ],
     outputFileTracingIncludes: {
       "/api/pdf/**": ["./node_modules/pdfkit/js/**/*"],
+      "/api/doc/**": ["./node_modules/pdfkit/js/**/*"],
     },
   },
 };

@@ -83,14 +83,15 @@ export default async function PageFactures() {
                   {formatEuros(d.montant_ttc)}
                 </div>
                 <div className="col-span-2 flex gap-2 md:col-span-1 md:justify-end">
-                  <Link
-                    href={`/impression/facture/${d.dossier_id}/${d.id}`}
+                  <a
+                    href={`/api/pdf/${d.dossier_id}/${d.id}`}
                     target="_blank"
+                    rel="noreferrer"
                     className="inline-flex items-center gap-1 rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:border-primary-300 hover:text-primary-700"
-                    title="Imprimer / PDF"
+                    title="Voir le PDF"
                   >
                     <Printer className="h-3.5 w-3.5" />
-                  </Link>
+                  </a>
                   <Link
                     href={`/dashboard/dossiers/${d.dossier_id}`}
                     className="inline-flex items-center rounded-lg border border-slate-200 px-2 py-1 text-xs text-slate-500 hover:border-primary-300 hover:text-primary-700"

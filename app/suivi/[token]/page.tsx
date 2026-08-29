@@ -185,7 +185,7 @@ export default async function PageSuivi({
         {devisRepondus.length > 0 && (
           <section className="space-y-3">
             {devisRepondus.map((d) => (
-              <DevisRepondu key={d.id} devis={d} />
+              <DevisRepondu key={d.id} devis={d} token={params.token} />
             ))}
           </section>
         )}

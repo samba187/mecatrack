@@ -2,7 +2,13 @@
 
 import { useState, useTransition } from "react";
 import { useFormState, useFormStatus } from "react-dom";
-import { AlertCircle, CheckCircle2, PenLine, XCircle } from "lucide-react";
+import {
+  AlertCircle,
+  CheckCircle2,
+  FileText,
+  PenLine,
+  XCircle,
+} from "lucide-react";
 import {
   actionRefuserDevis,
   actionSignerDevis,
@@ -171,7 +177,13 @@ export function DevisValidation({
   );
 }
 
-export function DevisRepondu({ devis }: { devis: Devis }) {
+export function DevisRepondu({
+  devis,
+  token,
+}: {
+  devis: Devis;
+  token: string;
+}) {
   const accepte = devis.statut === "accepte";
   return (
     <div
@@ -215,9 +227,22 @@ export function DevisRepondu({ devis }: { devis: Devis }) {
           ))}
         </ul>
       )}
-      <p className="mt-2 border-t border-slate-200/70 pt-2 font-mono text-sm font-semibold">
-        {formatEuros(devis.montant_ttc)} TTC
-      </p>
+      <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-slate-200/70 pt-2">
+        <span className="font-mono text-sm font-semibold">
+          {formatEuros(devis.montant_ttc)} TTC
+        </span>
+        {accepte && (
+          <a
+            href={`/api/doc/${token}/${devis.id}`}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1.5 rounded-lg border border-green-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-green-800 transition-colors hover:bg-green-100"
+          >
+            <FileText className="h-3.5 w-3.5" />
+            {devis.facture_numero ? "Voir la facture" : "Voir le devis"} (PDF)
+          </a>
+        )}
+      </div>
     </div>
   );
 }

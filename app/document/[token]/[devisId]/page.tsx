@@ -1,15 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PenLine } from "lucide-react";
-import { Cachet } from "@/components/dashboard/Cachet";
-import { PrintBar } from "@/components/dashboard/PrintButton";
+import { ArrowLeft, Download, Eye, PenLine } from "lucide-react";
 import { getDocumentParToken } from "@/lib/db";
-import {
-  formatDate,
-  formatDateTime,
-  formatEuros,
-  formatImmat,
-} from "@/lib/utils";
+import { formatEuros } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -26,206 +19,77 @@ export default async function PageDocumentClient({
   if (!res) notFound();
   const { garage, dossier, devis } = res;
   const facture = Boolean(devis.facture_numero);
-  const signe = devis.statut === "accepte";
   const aValider = devis.statut === "en_attente";
-  const dateDoc = facture ? devis.facture_at ?? devis.created_at : devis.created_at;
+  const pdf = `/api/doc/${params.token}/${params.devisId}`;
 
   return (
     <div className="min-h-screen bg-slate-100">
-      <PrintBar
-        retour={`/suivi/${params.token}`}
-        retourLabel="Retour au suivi"
-      />
+      <div className="mx-auto max-w-2xl px-4 py-8">
+        <Link
+          href={`/suivi/${params.token}`}
+          className="mb-5 inline-flex items-center gap-1.5 text-sm text-slate-500 transition-colors hover:text-ink"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Retour au suivi
+        </Link>
 
-      <div className="mx-auto max-w-3xl px-4 py-8">
-        {aValider && (
-          <div className="no-print mb-6 flex flex-col items-center gap-3 rounded-xl border-2 border-amber-200 bg-amber-50 p-5 text-center sm:flex-row sm:justify-between sm:text-left">
-            <p className="text-sm font-medium text-amber-900">
-              Ce devis attend votre accord pour lancer les travaux.
+        <div className="overflow-hidden rounded-2xl bg-white shadow-card">
+          <div className="border-b border-slate-100 p-6 text-center">
+            <p className="text-sm text-slate-500">{garage.nom}</p>
+            <h1 className="mt-1 text-xl font-bold text-primary-900">
+              {facture ? "Facture" : "Devis"}{" "}
+              {facture ? devis.facture_numero : devis.numero}
+            </h1>
+            <p className="mt-1 text-sm text-slate-500">
+              {dossier.vehicule_marque} {dossier.vehicule_modele}
             </p>
-            <Link
-              href={`/suivi/${params.token}`}
-              className="inline-flex shrink-0 items-center gap-2 rounded-lg bg-primary-800 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+            <p className="mt-3 text-2xl font-bold text-primary-900">
+              {formatEuros(devis.montant_ttc)}
+              <span className="ml-1 text-sm font-normal text-slate-400">
+                TTC
+              </span>
+            </p>
+          </div>
+
+          <div className="space-y-3 p-6">
+            {aValider && (
+              <Link
+                href={`/suivi/${params.token}`}
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-800 py-3.5 text-base font-semibold text-white transition-colors hover:bg-primary-700"
+              >
+                <PenLine className="h-5 w-5" />
+                Valider et signer
+              </Link>
+            )}
+            <a
+              href={pdf}
+              target="_blank"
+              rel="noreferrer"
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
             >
-              <PenLine className="h-4 w-4" />
-              Valider et signer
-            </Link>
+              <Eye className="h-4 w-4" />
+              Voir le {facture ? "document" : "devis"} (PDF)
+            </a>
+            <a
+              href={`${pdf}?dl=1`}
+              className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+            >
+              <Download className="h-4 w-4" />
+              Télécharger le PDF
+            </a>
           </div>
-        )}
-
-        <div className="print-sheet rounded-lg bg-white p-10 shadow-card">
-          {/* En-tête */}
-          <div className="flex items-start justify-between gap-6 border-b border-slate-200 pb-6">
-            <div>
-              {garage.logo_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={garage.logo_url}
-                  alt={garage.nom}
-                  className="mb-2.5 h-14 w-auto max-w-[180px] object-contain"
-                />
-              )}
-              <h1 className="text-2xl font-bold text-primary-900">{garage.nom}</h1>
-              <div className="mt-1.5 space-y-0.5 text-sm text-slate-500">
-                {garage.adresse && <p>{garage.adresse}</p>}
-                {garage.telephone && <p>Tél. {garage.telephone}</p>}
-                {garage.telephone_mobile && <p>Mobile {garage.telephone_mobile}</p>}
-                {garage.email && <p>{garage.email}</p>}
-                {garage.siret && (
-                  <p className="font-mono text-xs">SIRET {garage.siret}</p>
-                )}
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-xl font-bold uppercase tracking-wide text-slate-800">
-                {facture ? "Facture" : "Devis"}
-              </p>
-              <p className="mt-1 font-mono text-sm font-semibold text-primary-800">
-                {facture ? devis.facture_numero : devis.numero}
-              </p>
-              <p className="mt-1 text-sm text-slate-500">{formatDate(dateDoc)}</p>
-              {facture ? (
-                <span className="mt-2 inline-block rounded border border-green-200 bg-green-50 px-2 py-0.5 text-xs font-semibold text-green-700">
-                  Acquittée
-                </span>
-              ) : (
-                <span className="mt-2 inline-block rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
-                  {devis.type === "initial" ? "Devis d'entrée" : "Devis supplémentaire"}
-                </span>
-              )}
-            </div>
-          </div>
-
-          {/* Client + véhicule */}
-          <div className="mt-6 grid grid-cols-2 gap-6 text-sm">
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Client
-              </p>
-              <p className="font-semibold text-ink">{dossier.client_nom}</p>
-              {dossier.client_telephone && (
-                <p className="text-slate-500">{dossier.client_telephone}</p>
-              )}
-              {dossier.client_email && (
-                <p className="text-slate-500">{dossier.client_email}</p>
-              )}
-            </div>
-            <div>
-              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-400">
-                Véhicule
-              </p>
-              <p className="font-semibold text-ink">
-                {dossier.vehicule_marque} {dossier.vehicule_modele}
-                {dossier.vehicule_annee ? ` (${dossier.vehicule_annee})` : ""}
-              </p>
-              <p className="font-mono text-slate-600">
-                {formatImmat(dossier.vehicule_immat)}
-              </p>
-              {dossier.kilometrage != null && (
-                <p className="text-slate-500">
-                  {dossier.kilometrage.toLocaleString("fr-FR")} km
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* Lignes */}
-          <table className="mt-6 w-full text-sm">
-            <thead>
-              <tr className="border-b-2 border-slate-200 text-left text-xs uppercase tracking-wide text-slate-400">
-                <th className="pb-2 font-semibold">Désignation</th>
-                <th className="pb-2 text-center font-semibold">Qté</th>
-                <th className="pb-2 text-right font-semibold">PU HT</th>
-                <th className="pb-2 text-right font-semibold">Total HT</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {devis.lignes?.map((l, i) => (
-                <tr key={i}>
-                  <td className="py-2.5 pr-2 text-slate-700">{l.designation}</td>
-                  <td className="py-2.5 px-2 text-center font-mono text-slate-500">
-                    {l.quantite}
-                  </td>
-                  <td className="py-2.5 pl-2 text-right font-mono text-slate-500">
-                    {formatEuros(l.prix_unitaire_ht)}
-                  </td>
-                  <td className="py-2.5 pl-2 text-right font-mono font-medium text-ink">
-                    {formatEuros(l.quantite * l.prix_unitaire_ht)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-
-          {/* Totaux */}
-          <div className="mt-4 flex justify-end">
-            <dl className="w-56 space-y-1 text-sm">
-              <div className="flex justify-between text-slate-500">
-                <dt>Total HT</dt>
-                <dd className="font-mono">{formatEuros(devis.montant_ht)}</dd>
-              </div>
-              <div className="flex justify-between text-slate-500">
-                <dt>TVA ({devis.tva_pct} %)</dt>
-                <dd className="font-mono">
-                  {formatEuros(devis.montant_ttc - devis.montant_ht)}
-                </dd>
-              </div>
-              <div className="flex justify-between border-t-2 border-slate-200 pt-1.5 text-base font-bold text-primary-900">
-                <dt>Total TTC</dt>
-                <dd className="font-mono">{formatEuros(devis.montant_ttc)}</dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* Pied : mentions, cachet */}
-          <div className="mt-8 flex items-end justify-between gap-6 border-t border-slate-200 pt-6">
-            <div className="max-w-xs space-y-1 text-xs leading-relaxed text-slate-400">
-              <p>
-                {garage.mentions_devis ??
-                  "Devis valable 30 jours. TVA non applicable, art. 293 B du CGI le cas échéant."}
-              </p>
-              {garage.conditions_paiement && <p>{garage.conditions_paiement}</p>}
-              <p>
-                Document généré via Fiavo le {formatDateTime(dateDoc)}.
-              </p>
-            </div>
-            <div className="flex items-end gap-4">
-              {garage.cachet_url && (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={garage.cachet_url}
-                  alt="Cachet du garage"
-                  className="h-24 w-auto max-w-[150px] object-contain"
-                />
-              )}
-              <Cachet garage={garage} date={dateDoc} />
-            </div>
-          </div>
-
-          {/* Signature (si accepté) */}
-          {signe && (
-            <div className="mt-6 rounded-lg border border-slate-200 p-4">
-              <div className="flex items-center justify-between gap-4">
-                <div className="text-sm">
-                  <p className="font-semibold text-green-700">
-                    Bon pour accord — accepté et signé
-                  </p>
-                  <p className="text-slate-500">
-                    Par {devis.signe_par}, le {formatDateTime(devis.signature_at)}
-                  </p>
-                </div>
-                {devis.signature_base64 && (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={devis.signature_base64}
-                    alt={`Signature de ${devis.signe_par}`}
-                    className="h-16 object-contain"
-                  />
-                )}
-              </div>
-            </div>
-          )}
         </div>
+
+        {/* Aperçu intégré (desktop) — le bouton ci-dessus reste la voie sûre sur mobile. */}
+        <object
+          data={pdf}
+          type="application/pdf"
+          className="mt-6 hidden h-[80vh] w-full rounded-xl border border-slate-200 sm:block"
+        >
+          <p className="p-4 text-center text-sm text-slate-500">
+            Aperçu indisponible — utilisez le bouton « Voir le PDF » ci-dessus.
+          </p>
+        </object>
       </div>
     </div>
   );
