@@ -1,4 +1,4 @@
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 
 /**
  * Mode démo « global » : actif quand Supabase n'est pas configuré (ou via
@@ -45,12 +45,31 @@ export const APP_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
   (vercelUrl ? `https://${vercelUrl}` : "http://localhost:3000");
 
+/**
+ * URL de base réelle de la requête courante (protocole + domaine). Évite de
+ * dépendre de NEXT_PUBLIC_APP_URL : les liens envoyés par SMS/email pointent
+ * toujours vers le domaine sur lequel tourne réellement l'app.
+ */
+export function baseUrl(): string {
+  try {
+    const h = headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    if (host) {
+      const proto = h.get("x-forwarded-proto") ?? "https";
+      return `${proto}://${host}`;
+    }
+  } catch {
+    /* hors contexte requête : on retombe sur APP_URL */
+  }
+  return APP_URL;
+}
+
 export function lienSuivi(token: string): string {
-  return `${APP_URL}/suivi/${token}`;
+  return `${baseUrl()}/suivi/${token}`;
 }
 
 export function lienDocument(token: string, devisId: string): string {
-  return `${APP_URL}/document/${token}/${devisId}`;
+  return `${baseUrl()}/document/${token}/${devisId}`;
 }
 
 /** Adresse qui reçoit les messages de support des garages. */

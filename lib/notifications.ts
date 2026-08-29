@@ -171,7 +171,7 @@ export async function smsCreationDossier(
   if (!dossier.client_telephone) return false;
   return envoyerSms(
     dossier.client_telephone,
-    `Bonjour ${dossier.client_nom}, votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} est bien arrivé au garage ${garage.nom}. Suivez l'avancement ici : ${lienSuivi(dossier.token_public)}`
+    `${garage.nom} : votre ${dossier.vehicule_marque} est prise en charge. Suivez la réparation : ${lienSuivi(dossier.token_public)}`
   );
 }
 
@@ -184,13 +184,13 @@ export async function smsChangementStatut(
   const lien = lienSuivi(dossier.token_public);
   const vehicule = `${dossier.vehicule_marque} ${dossier.vehicule_modele}`;
   const corps: Partial<Record<Statut, string>> = {
-    diagnostic: `${garage.nom} : le diagnostic de votre ${vehicule} est en cours. Suivi : ${lien}`,
-    en_cours: `${garage.nom} : la réparation de votre ${vehicule} a commencé. Suivi : ${lien}`,
-    en_attente_validation: `${garage.nom} : une intervention supplémentaire nécessite votre accord pour votre ${vehicule}. Validez ou refusez ici : ${lien}`,
-    pret: `Bonne nouvelle ! Votre ${vehicule} est prête. Vous pouvez venir la récupérer chez ${garage.nom}. Détails : ${lien}`,
+    diagnostic: `${garage.nom} : diagnostic de votre ${vehicule} en cours. Suivi : ${lien}`,
+    en_cours: `${garage.nom} : réparation de votre ${vehicule} en cours. Suivi : ${lien}`,
+    en_attente_validation: `${garage.nom} : votre accord est requis pour votre ${vehicule}. Validez ici : ${lien}`,
+    pret: `${garage.nom} : votre ${vehicule} est prête ! Vous pouvez venir la récupérer. ${lien}`,
     livre: garage.lien_avis
-      ? `Merci d'avoir choisi ${garage.nom} pour votre ${vehicule} ! Votre avis nous aide beaucoup : ${garage.lien_avis}`
-      : `Merci d'avoir choisi ${garage.nom} pour votre ${vehicule} ! À bientôt.`,
+      ? `Merci d'avoir choisi ${garage.nom} ! Votre avis compte : ${garage.lien_avis}`
+      : `Merci d'avoir choisi ${garage.nom} ! À bientôt.`,
   };
   const message = corps[statut];
   if (!message) return false;
@@ -204,7 +204,7 @@ export async function smsNouveauDevis(
   if (!dossier.client_telephone) return false;
   return envoyerSms(
     dossier.client_telephone,
-    `${garage.nom} : un devis pour des travaux supplémentaires sur votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} attend votre validation : ${lienSuivi(dossier.token_public)}`
+    `${garage.nom} : un devis attend votre validation pour votre ${dossier.vehicule_marque}. ${lienSuivi(dossier.token_public)}`
   );
 }
 
@@ -223,7 +223,7 @@ export async function smsDocument(
     : `votre devis ${devis.numero}`;
   return envoyerSms(
     dossier.client_telephone,
-    `${garage.nom} : ${quoi} pour votre ${dossier.vehicule_marque} ${dossier.vehicule_modele} est disponible ici : ${lien}`
+    `${garage.nom} : ${quoi} pour votre ${dossier.vehicule_marque} est disponible : ${lien}`
   );
 }
 
