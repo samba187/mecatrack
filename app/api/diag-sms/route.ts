@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getGarageCourant, smsCeMois } from "@/lib/db";
+import { normaliserTel } from "@/lib/notifications";
 import { peutEnvoyerSms, planEffectif, quotaSms } from "@/lib/plans";
 
 export const dynamic = "force-dynamic";
@@ -41,12 +42,9 @@ export async function GET(request: Request) {
 
   const to = new URL(request.url).searchParams.get("to");
   if (to) {
-    const clean = to.replace(/[\s.\-()]/g, "");
-    const destinataire = clean.startsWith("+")
-      ? clean
-      : clean.startsWith("0")
-        ? `+33${clean.slice(1)}`
-        : clean;
+    // Dans une URL, « + » est décodé en espace : on le rétablit avant
+    // normalisation pour que ?to=+33... soit interprété correctement.
+    const destinataire = normaliserTel(to.trim().replace(/^\s+/, ""));
 
     if (!cle) {
       diag.envoi = {

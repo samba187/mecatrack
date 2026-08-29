@@ -1,4 +1,4 @@
-import { lienSuivi, SUPPORT_EMAIL } from "./config";
+import { estDemo, lienSuivi, SUPPORT_EMAIL } from "./config";
 import type { Devis, Dossier, Garage, Statut } from "./types";
 
 function echapperHtml(s: string): string {
@@ -82,6 +82,14 @@ export async function envoyerSms(
   corps: string
 ): Promise<boolean> {
   const destinataire = normaliserTel(vers);
+
+  // Jamais d'envoi réel depuis une session de démonstration : la démo est
+  // publique, un visiteur pourrait sinon faire partir des SMS à nos frais.
+  if (estDemo()) {
+    console.log(`[SMS démo — non envoyé] → ${destinataire} : ${corps}`);
+    return true;
+  }
+
   const brevo = process.env.BREVO_API_KEY;
   const sid = process.env.TWILIO_ACCOUNT_SID;
   const token = process.env.TWILIO_AUTH_TOKEN;
@@ -111,6 +119,11 @@ export async function envoyerEmail(
   sujet: string,
   html: string
 ): Promise<void> {
+  // Comme pour les SMS : aucune sortie réelle depuis la démo publique.
+  if (estDemo()) {
+    console.log(`[Email démo — non envoyé] → ${vers} : ${sujet}`);
+    return;
+  }
   const key = process.env.RESEND_API_KEY;
   if (!key) {
     console.log(`[Email simulé] → ${vers} : ${sujet}`);
@@ -129,10 +142,23 @@ export async function envoyerEmail(
   }
 }
 
-function normaliserTel(tel: string): string {
-  const clean = tel.replace(/[\s.\-()]/g, "");
-  if (clean.startsWith("+")) return clean;
+/**
+ * Met un numéro au format international E.164 attendu par les opérateurs.
+ * Tolère les saisies courantes : 06 12 34 56 78, 0033…, +33 06… (indicatif
+ * suivi du 0 initial, erreur fréquente), 33612345678.
+ */
+export function normaliserTel(tel: string): string {
+  let clean = tel.replace(/[\s.\-()]/g, "");
+  if (clean.startsWith("00")) clean = `+${clean.slice(2)}`;
+  if (clean.startsWith("+")) {
+    // +330612345678 → +33612345678 (le 0 national est en trop)
+    const m = clean.match(/^\+330(\d{9})$/);
+    return m ? `+33${m[1]}` : clean;
+  }
   if (clean.startsWith("0")) return `+33${clean.slice(1)}`;
+  // 33612345678 ou 330612345678 saisis sans le +
+  const m = clean.match(/^33(0?)(\d{9})$/);
+  if (m) return `+33${m[2]}`;
   return clean;
 }
 
