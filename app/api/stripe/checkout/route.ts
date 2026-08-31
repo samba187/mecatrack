@@ -34,6 +34,19 @@ export async function GET(request: NextRequest) {
   try {
     const s = stripe();
     let customerId = garage.stripe_customer_id;
+
+    // Le client stocké peut venir d'un autre mode (un client TEST n'existe pas
+    // en LIVE, et inversement) : on vérifie qu'il existe dans le mode courant,
+    // sinon on le considère absent pour en recréer un.
+    if (customerId) {
+      try {
+        const c = await s.customers.retrieve(customerId);
+        if ((c as { deleted?: boolean }).deleted) customerId = null;
+      } catch {
+        customerId = null;
+      }
+    }
+
     if (!customerId) {
       const customer = await s.customers.create({
         email: garage.email ?? undefined,
