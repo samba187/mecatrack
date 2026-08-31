@@ -44,6 +44,21 @@ export async function GET(request: Request) {
         erreur: e instanceof Error ? e.message : String(e),
       };
     }
+    // Reproduit l'opération qui échoue au checkout : création d'une session.
+    try {
+      const session = await stripe().checkout.sessions.create({
+        mode: "subscription",
+        line_items: [{ price: idAtelier, quantity: 1 }],
+        success_url: "https://www.fiavo.fr/dashboard/compte",
+        cancel_url: "https://www.fiavo.fr/dashboard/compte",
+      });
+      diag.session = { ok: true, cree: Boolean(session.url) };
+    } catch (e) {
+      diag.session = {
+        ok: false,
+        erreur: e instanceof Error ? e.message : String(e),
+      };
+    }
   }
 
   return NextResponse.json(diag);
