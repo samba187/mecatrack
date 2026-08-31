@@ -44,6 +44,13 @@ export async function POST(request: NextRequest) {
             stripe_customer_id: session.customer as string,
           })
           .eq("id", garageId);
+        const { journaliser } = await import("@/lib/admin");
+        await journaliser({
+          niveau: "succes",
+          type: "abonnement",
+          message: `Nouvel abonnement ${plan === "pro" ? "Pro (59 €)" : "Atelier (34 €)"}`,
+          garage: session.customer_details?.email ?? (session.customer as string),
+        });
       }
       break;
     }
@@ -78,6 +85,14 @@ export async function POST(request: NextRequest) {
           .from("garages")
           .update({ plan: "expired", stripe_subscription_id: null })
           .eq("id", garageId);
+        const { journaliser } = await import("@/lib/admin");
+        await journaliser({
+          niveau: "info",
+          type: "abonnement",
+          message: "Abonnement terminé (compte repassé en lecture seule)",
+          garage:
+            typeof sub.customer === "string" ? sub.customer : sub.customer.id,
+        });
       }
       break;
     }
@@ -95,6 +110,13 @@ export async function POST(request: NextRequest) {
           garage as Garage,
           `${APP_URL}/api/stripe/portal`
         );
+        const { journaliser } = await import("@/lib/admin");
+        await journaliser({
+          niveau: "erreur",
+          type: "paiement",
+          message: "Échec de prélèvement d'abonnement (email envoyé au garage)",
+          garage: (garage as Garage).email ?? (garage as Garage).nom,
+        });
       }
       break;
     }

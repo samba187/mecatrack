@@ -66,6 +66,13 @@ export async function GET(request: NextRequest) {
     // Plutôt qu'une page d'erreur brute : on renvoie au compte avec un message,
     // et on journalise la cause exacte (prix inexistant, clé invalide…).
     console.error("Échec création session Stripe", e);
+    const { journaliser } = await import("@/lib/admin");
+    await journaliser({
+      niveau: "erreur",
+      type: "paiement",
+      message: `Ouverture du paiement échouée (${plan}) : ${e instanceof Error ? e.message : String(e)}`,
+      garage: `${garage.nom} (${garage.email ?? "—"})`,
+    });
     return NextResponse.redirect(`${compte}?erreur=stripe-checkout`);
   }
 }

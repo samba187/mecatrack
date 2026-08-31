@@ -2,6 +2,7 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import { journaliser } from "@/lib/admin";
 import { COOKIE_DEMO, DEMO_MODE, APP_URL } from "@/lib/config";
 import {
   CONDITIONS_PAIEMENT_DEFAUT,
@@ -72,6 +73,12 @@ export async function actionInscription(
     options: { emailRedirectTo: `${APP_URL}/auth/login` },
   });
   if (error || !data.user) {
+    await journaliser({
+      niveau: "erreur",
+      type: "inscription",
+      message: `Échec inscription : ${error?.message ?? "inconnu"}`,
+      garage: `${nom_garage} (${email})`,
+    });
     return { error: error?.message ?? "Inscription impossible." };
   }
 
@@ -95,7 +102,22 @@ export async function actionInscription(
     })
     .select()
     .single();
-  if (errGarage) return { error: "Erreur lors de la création du compte garage." };
+  if (errGarage) {
+    await journaliser({
+      niveau: "erreur",
+      type: "inscription",
+      message: `Création du garage échouée : ${errGarage.message}`,
+      garage: `${nom_garage} (${email})`,
+    });
+    return { error: "Erreur lors de la création du compte garage." };
+  }
+
+  await journaliser({
+    niveau: "succes",
+    type: "inscription",
+    message: "Nouveau garage inscrit (essai 14 jours démarré)",
+    garage: `${nom_garage} (${email})`,
+  });
 
   // Pré-remplit un catalogue de prestations pour que le garage ne parte pas
   // d'une page blanche. Non bloquant : un échec ici n'empêche pas l'inscription.

@@ -42,6 +42,18 @@ create table if not exists public.sms_usage (
 );
 alter table public.sms_usage enable row level security;
 
+-- Journal d'événements/erreurs (inscriptions, paiements, abonnements) — pilotage
+create table if not exists public.journal (
+  id uuid primary key default gen_random_uuid(),
+  niveau text not null default 'info',   -- info | succes | erreur
+  type text not null,                    -- inscription | paiement | abonnement | sms | support
+  message text not null,
+  garage text,                           -- nom ou email du garage concerné
+  created_at timestamptz not null default now()
+);
+create index if not exists journal_created_idx on public.journal(created_at desc);
+alter table public.journal enable row level security;
+
 -- Messages de support envoyés depuis la bulle d'aide (lus via l'admin)
 create table if not exists public.support_messages (
   id uuid primary key default gen_random_uuid(),

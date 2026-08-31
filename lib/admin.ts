@@ -20,6 +20,35 @@ function moisCourant(): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
+export type NiveauJournal = "info" | "succes" | "erreur";
+
+/**
+ * Enregistre un événement dans le journal de pilotage (inscriptions, paiements,
+ * abonnements, erreurs…). Best-effort : ne lève jamais, ne bloque jamais le
+ * flux appelant même si la table n'existe pas encore.
+ */
+export async function journaliser(entree: {
+  type: string;
+  message: string;
+  niveau?: NiveauJournal;
+  garage?: string | null;
+}): Promise<void> {
+  if (estDemo()) {
+    console.log(`[journal:${entree.type}] ${entree.message}`);
+    return;
+  }
+  try {
+    await supabaseAdmin().from("journal").insert({
+      niveau: entree.niveau ?? "info",
+      type: entree.type,
+      message: entree.message,
+      garage: entree.garage ?? null,
+    });
+  } catch (e) {
+    console.error("journal insert échoué", e);
+  }
+}
+
 export interface Pilotage {
   garages: number;
   essaisEnCours: number;
@@ -39,6 +68,13 @@ export interface Pilotage {
     plan: string;
     cree: string;
     finEssai: string | null;
+  }[];
+  journal: {
+    niveau: NiveauJournal;
+    type: string;
+    message: string;
+    garage: string | null;
+    created_at: string;
   }[];
   stripe: {
     configure: boolean;
@@ -63,12 +99,23 @@ export async function donneesPilotage(): Promise<Pilotage> {
   let supportTotal = 0;
   let supportNonTraite = 0;
 
+  let journal: Pilotage["journal"] = [];
+
   if (estDemo()) {
     garages = [demoDb().garage];
     smsMois = demoDb().smsParMois[mois] ?? 0;
+    journal = [
+      {
+        niveau: "succes",
+        type: "inscription",
+        message: "Exemple : nouveau garage inscrit (démo)",
+        garage: "Garage Lemoine",
+        created_at: new Date().toISOString(),
+      },
+    ];
   } else {
     const admin = supabaseAdmin();
-    const [gRes, sRes, stRes, sntRes] = await Promise.all([
+    const [gRes, sRes, stRes, sntRes, jRes] = await Promise.all([
       admin.from("garages").select("*"),
       admin.from("sms_usage").select("count").eq("mois", mois),
       admin.from("support_messages").select("id", { count: "exact", head: true }),
@@ -76,6 +123,11 @@ export async function donneesPilotage(): Promise<Pilotage> {
         .from("support_messages")
         .select("id", { count: "exact", head: true })
         .eq("traite", false),
+      admin
+        .from("journal")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(40),
     ]);
     garages = (gRes.data ?? []) as Garage[];
     smsMois = (sRes.data ?? []).reduce(
@@ -84,6 +136,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     );
     supportTotal = stRes.count ?? 0;
     supportNonTraite = sntRes.count ?? 0;
+    journal = (jRes.data ?? []) as Pilotage["journal"];
   }
 
   const now = Date.now();
@@ -192,6 +245,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     supportTotal,
     supportNonTraite,
     derniersComptes,
+    journal,
     stripe: stripeInfo,
   };
 }
