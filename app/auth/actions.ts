@@ -12,7 +12,6 @@ import {
 import { DUREE_ESSAI_JOURS } from "@/lib/plans";
 import { supabaseAdmin, supabaseServer } from "@/lib/supabase/server";
 import { schemaConnexion, schemaInscription } from "@/lib/validation";
-import { verifierSiret } from "@/lib/siret";
 import { emailBienvenue } from "@/lib/notifications";
 import type { Garage } from "@/lib/types";
 
@@ -65,12 +64,6 @@ export async function actionInscription(
     };
   }
   const { nom_garage, siret, email, password, telephone } = parsed.data;
-
-  // Vérifie que le SIRET correspond à une entreprise réellement immatriculée.
-  const verif = await verifierSiret(siret);
-  if (!verif.ok) {
-    return { error: verif.erreur ?? "SIRET invalide." };
-  }
 
   const supabase = supabaseServer();
   const { data, error } = await supabase.auth.signUp({

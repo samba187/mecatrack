@@ -83,7 +83,9 @@ export default async function PageCompte({
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {searchParams.erreur === "stripe-non-configure"
             ? "Le paiement n'est pas encore configuré sur cet environnement."
-            : "Le portail de facturation n'est pas disponible pour ce compte."}
+            : searchParams.erreur === "stripe-checkout"
+              ? "Impossible d'ouvrir le paiement pour le moment. Réessayez dans un instant."
+              : "Le portail de facturation n'est pas disponible pour ce compte."}
         </div>
       )}
 

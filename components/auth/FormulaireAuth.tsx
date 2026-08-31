@@ -71,10 +71,9 @@ export function FormulaireInscription() {
         <Input id="nom_garage" name="nom_garage" placeholder="Garage Martin" required autoFocus />
       </Champ>
       <Champ
-        label="SIRET"
+        label="SIRET (facultatif)"
         htmlFor="siret"
-        obligatoire
-        aide="14 chiffres. Vérifié auprès du registre officiel des entreprises."
+        aide="Apparaît sur vos devis et factures. Vous pourrez le renseigner plus tard."
       >
         <Input
           id="siret"
@@ -83,7 +82,6 @@ export function FormulaireInscription() {
           placeholder="123 456 789 00012"
           className="font-mono"
           maxLength={17}
-          required
         />
       </Champ>
       <Champ label="Téléphone du garage" htmlFor="telephone" obligatoire>
