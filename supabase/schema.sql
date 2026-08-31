@@ -29,6 +29,7 @@ create unique index garages_user_id_idx on public.garages(user_id);
 alter table public.garages add column if not exists telephone_mobile text;
 alter table public.garages add column if not exists cachet_url text;
 alter table public.garages add column if not exists lien_avis text;
+alter table public.garages add column if not exists rappels_essai text;
 alter table public.garages add column if not exists tva_defaut numeric(5,2);
 alter table public.garages add column if not exists conditions_paiement text;
 alter table public.garages add column if not exists mentions_devis text;
