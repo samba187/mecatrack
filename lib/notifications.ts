@@ -281,17 +281,43 @@ export async function smsGarageMessage(
 
 // ── Emails garagiste ────────────────────────────────────────────────────────
 
-function gabarit(titre: string, corps: string, cta?: { label: string; url: string }): string {
-  return `<!doctype html><html lang="fr"><body style="margin:0;padding:0;background:#F8FAFC;font-family:Arial,Helvetica,sans-serif;color:#0F172A">
-  <div style="max-width:560px;margin:0 auto;padding:32px 16px">
-    <div style="font-size:18px;font-weight:bold;color:#1A2338;margin-bottom:24px">Fiavo</div>
-    <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:32px">
-      <h1 style="font-size:20px;margin:0 0 16px">${titre}</h1>
-      <div style="font-size:15px;line-height:1.6;color:#334155">${corps}</div>
-      ${cta ? `<a href="${cta.url}" style="display:inline-block;margin-top:24px;background:#1A2338;color:#fff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px">${cta.label}</a>` : ""}
-    </div>
-    <p style="font-size:12px;color:#94A3B8;margin-top:24px">Fiavo — Suivi de r&eacute;paration pour garages ind&eacute;pendants</p>
-  </div>
+const LOGO_EMAIL = "https://www.fiavo.fr/logo-full.png";
+
+function gabarit(
+  titre: string,
+  corps: string,
+  cta?: { label: string; url: string }
+): string {
+  return `<!doctype html>
+<html lang="fr">
+<body style="margin:0;padding:0;background:#EEF2F7;font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:#1A2338;-webkit-font-smoothing:antialiased">
+  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${titre}</div>
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#EEF2F7">
+    <tr><td align="center" style="padding:32px 16px">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
+        <tr><td align="center" style="padding-bottom:24px">
+          <img src="${LOGO_EMAIL}" alt="Fiavo" height="34" style="height:34px;width:auto;display:block;border:0">
+        </td></tr>
+        <tr><td style="background:#ffffff;border:1px solid #E2E8F0;border-radius:16px;padding:36px 32px;box-shadow:0 1px 3px rgba(15,23,42,0.05)">
+          <h1 style="font-size:20px;font-weight:700;margin:0 0 18px;color:#1A2338">${titre}</h1>
+          <div style="font-size:15px;line-height:1.65;color:#475569">${corps}</div>
+          ${
+            cta
+              ? `<table role="presentation" cellpadding="0" cellspacing="0" style="margin-top:28px"><tr><td style="border-radius:10px;background:#1A2338">
+          <a href="${cta.url}" style="display:inline-block;padding:13px 28px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;border-radius:10px">${cta.label}</a>
+        </td></tr></table>`
+              : ""
+          }
+        </td></tr>
+        <tr><td align="center" style="padding-top:24px">
+          <p style="font-size:12px;line-height:1.6;color:#94A3B8;margin:0">
+            Fiavo &mdash; le suivi de r&eacute;paration en temps r&eacute;el pour les garages.<br>
+            <a href="https://www.fiavo.fr" style="color:#94A3B8;text-decoration:underline">fiavo.fr</a>
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
 </body></html>`;
 }
 
