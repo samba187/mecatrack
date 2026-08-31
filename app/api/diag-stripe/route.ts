@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server";
-import { getGarageCourant } from "@/lib/db";
 import { stripe, stripeConfigure } from "@/lib/stripe";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-/** TEMPORAIRE : diagnostique la config Stripe (sans exposer les clés). */
-export async function GET() {
-  const garage = await getGarageCourant();
-  if (!garage) {
-    return NextResponse.json({ error: "Non connecté" }, { status: 401 });
+/** TEMPORAIRE : diagnostic Stripe, protégé par ADMIN_PASSWORD (?cle=). */
+export async function GET(request: Request) {
+  const cle = new URL(request.url).searchParams.get("cle");
+  if (!process.env.ADMIN_PASSWORD || cle !== process.env.ADMIN_PASSWORD) {
+    return NextResponse.json({ error: "non autorisé" }, { status: 404 });
   }
 
   const sk = process.env.STRIPE_SECRET_KEY ?? "";
@@ -22,23 +21,28 @@ export async function GET() {
       : sk.startsWith("sk_test")
         ? "TEST"
         : "inconnu",
-    priceAtelierPrefixe: idAtelier.slice(0, 8) || null,
-    priceProPrefixe: idPro.slice(0, 8) || null,
+    priceAtelier: idAtelier.slice(0, 10) || null,
+    pricePro: idPro.slice(0, 10) || null,
   };
 
   if (stripeConfigure()) {
-    // Test « je peux créer une session » : reproduit l'erreur réelle du checkout.
     try {
       const p = await stripe().prices.retrieve(idAtelier);
       diag.prix_atelier = { ok: true, montant: (p.unit_amount ?? 0) / 100 };
     } catch (e) {
-      diag.prix_atelier = { ok: false, erreur: e instanceof Error ? e.message : String(e) };
+      diag.prix_atelier = {
+        ok: false,
+        erreur: e instanceof Error ? e.message : String(e),
+      };
     }
     try {
       const p = await stripe().prices.retrieve(idPro);
       diag.prix_pro = { ok: true, montant: (p.unit_amount ?? 0) / 100 };
     } catch (e) {
-      diag.prix_pro = { ok: false, erreur: e instanceof Error ? e.message : String(e) };
+      diag.prix_pro = {
+        ok: false,
+        erreur: e instanceof Error ? e.message : String(e),
+      };
     }
   }
 
