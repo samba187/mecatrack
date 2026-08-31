@@ -40,17 +40,6 @@ export async function GET() {
     } catch (e) {
       diag.prix_pro = { ok: false, erreur: e instanceof Error ? e.message : String(e) };
     }
-    // Test compte activé pour l'encaissement.
-    try {
-      const acct = await stripe().accounts.retrieve();
-      diag.compte = {
-        chargesActives: acct.charges_enabled,
-        paiementsActifs: acct.payouts_enabled,
-        details_soumis: acct.details_submitted,
-      };
-    } catch (e) {
-      diag.compte = { erreur: e instanceof Error ? e.message : String(e) };
-    }
   }
 
   return NextResponse.json(diag);
