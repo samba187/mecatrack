@@ -64,6 +64,17 @@ export default async function PagePilotage() {
           )}
         </div>
 
+        {/* Visites du site (premier signal : est-ce que des gens viennent ?) */}
+        <div className="grid grid-cols-3 gap-3">
+          <Kpi
+            valeur={String(d.visitesAujourdhui)}
+            libelle="Visites aujourd'hui"
+            accent
+          />
+          <Kpi valeur={String(d.visites7j)} libelle="Visites (7 j)" />
+          <Kpi valeur={String(d.visitesTotal)} libelle="Visites (total)" />
+        </div>
+
         {/* KPI principaux */}
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <Kpi valeur={String(d.garages)} libelle="Comptes garages" />

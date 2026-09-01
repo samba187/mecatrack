@@ -58,6 +58,9 @@ export interface Pilotage {
   mrr: number;
   nouveauxSemaine: number;
   nouveauxMois: number;
+  visitesAujourdhui: number;
+  visites7j: number;
+  visitesTotal: number;
   essaisBientot: { nom: string; email: string | null; jours: number }[];
   smsMois: number;
   supportTotal: number;
@@ -100,10 +103,16 @@ export async function donneesPilotage(): Promise<Pilotage> {
   let supportNonTraite = 0;
 
   let journal: Pilotage["journal"] = [];
+  let visitesAujourdhui = 0;
+  let visites7j = 0;
+  let visitesTotal = 0;
 
   if (estDemo()) {
     garages = [demoDb().garage];
     smsMois = demoDb().smsParMois[mois] ?? 0;
+    visitesAujourdhui = 12;
+    visites7j = 43;
+    visitesTotal = 128;
     journal = [
       {
         niveau: "succes",
@@ -137,6 +146,21 @@ export async function donneesPilotage(): Promise<Pilotage> {
     supportTotal = stRes.count ?? 0;
     supportNonTraite = sntRes.count ?? 0;
     journal = (jRes.data ?? []) as Pilotage["journal"];
+
+    const aujourdhui = new Date().toISOString().slice(0, 10);
+    const il7 = new Date(Date.now() - 6 * 86400000)
+      .toISOString()
+      .slice(0, 10);
+    const [vTout, vAuj] = await Promise.all([
+      admin.from("visites").select("jour, vues"),
+      admin.from("visites").select("vues").eq("jour", aujourdhui).maybeSingle(),
+    ]);
+    const lignes = (vTout.data ?? []) as { jour: string; vues: number }[];
+    visitesTotal = lignes.reduce((s, r) => s + (r.vues ?? 0), 0);
+    visites7j = lignes
+      .filter((r) => r.jour >= il7)
+      .reduce((s, r) => s + (r.vues ?? 0), 0);
+    visitesAujourdhui = (vAuj.data?.vues as number | undefined) ?? 0;
   }
 
   const now = Date.now();
@@ -240,6 +264,9 @@ export async function donneesPilotage(): Promise<Pilotage> {
     mrr: atelier * PRIX.atelier + pro * PRIX.pro,
     nouveauxSemaine,
     nouveauxMois,
+    visitesAujourdhui,
+    visites7j,
+    visitesTotal,
     essaisBientot: essaisBientot.slice(0, 8),
     smsMois,
     supportTotal,

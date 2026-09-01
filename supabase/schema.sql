@@ -43,6 +43,13 @@ create table if not exists public.sms_usage (
 );
 alter table public.sms_usage enable row level security;
 
+-- Compteur de visites du site (par jour) — pilotage
+create table if not exists public.visites (
+  jour date primary key default current_date,
+  vues integer not null default 0
+);
+alter table public.visites enable row level security;
+
 -- Journal d'événements/erreurs (inscriptions, paiements, abonnements) — pilotage
 create table if not exists public.journal (
   id uuid primary key default gen_random_uuid(),

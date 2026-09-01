@@ -8,6 +8,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { Logo } from "@/components/Logo";
+import { Vue } from "@/components/Vue";
 import { LandingNav } from "@/components/landing/LandingNav";
 import { Reveal } from "@/components/landing/Reveal";
 import { HeroVisual } from "@/components/landing/HeroVisual";
@@ -22,6 +23,7 @@ import { PLANS } from "@/lib/plans";
 export default function LandingPage() {
   return (
     <div className="min-h-screen overflow-x-hidden bg-white text-ink">
+      <Vue />
       <LandingNav />
       <Hero />
       <TrustBar />
