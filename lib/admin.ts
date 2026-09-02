@@ -65,6 +65,12 @@ export interface Pilotage {
   smsMois: number;
   supportTotal: number;
   supportNonTraite: number;
+  messagesSupport: {
+    email: string | null;
+    sujet: string | null;
+    message: string;
+    created_at: string;
+  }[];
   derniersComptes: {
     nom: string;
     email: string | null;
@@ -103,6 +109,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
   let supportNonTraite = 0;
 
   let journal: Pilotage["journal"] = [];
+  let messagesSupport: Pilotage["messagesSupport"] = [];
   let visitesAujourdhui = 0;
   let visites7j = 0;
   let visitesTotal = 0;
@@ -113,6 +120,14 @@ export async function donneesPilotage(): Promise<Pilotage> {
     visitesAujourdhui = 12;
     visites7j = 43;
     visitesTotal = 128;
+    messagesSupport = [
+      {
+        email: "contact@garage-lemoine.fr",
+        sujet: "Question",
+        message: "Exemple de message de support (démo).",
+        created_at: new Date().toISOString(),
+      },
+    ];
     journal = [
       {
         niveau: "succes",
@@ -124,7 +139,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     ];
   } else {
     const admin = supabaseAdmin();
-    const [gRes, sRes, stRes, sntRes, jRes] = await Promise.all([
+    const [gRes, sRes, stRes, sntRes, jRes, msgRes] = await Promise.all([
       admin.from("garages").select("*"),
       admin.from("sms_usage").select("count").eq("mois", mois),
       admin.from("support_messages").select("id", { count: "exact", head: true }),
@@ -137,6 +152,11 @@ export async function donneesPilotage(): Promise<Pilotage> {
         .select("*")
         .order("created_at", { ascending: false })
         .limit(40),
+      admin
+        .from("support_messages")
+        .select("email, sujet, message, created_at")
+        .order("created_at", { ascending: false })
+        .limit(15),
     ]);
     garages = (gRes.data ?? []) as Garage[];
     smsMois = (sRes.data ?? []).reduce(
@@ -146,6 +166,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     supportTotal = stRes.count ?? 0;
     supportNonTraite = sntRes.count ?? 0;
     journal = (jRes.data ?? []) as Pilotage["journal"];
+    messagesSupport = (msgRes.data ?? []) as Pilotage["messagesSupport"];
 
     const aujourdhui = new Date().toISOString().slice(0, 10);
     const il7 = new Date(Date.now() - 6 * 86400000)
@@ -271,6 +292,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     smsMois,
     supportTotal,
     supportNonTraite,
+    messagesSupport,
     derniersComptes,
     journal,
     stripe: stripeInfo,

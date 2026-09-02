@@ -241,6 +241,39 @@ export default async function PagePilotage() {
           )}
         </section>
 
+        {/* Messages de support */}
+        {d.messagesSupport.length > 0 && (
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="mb-3 font-semibold text-ink">Messages de support</h2>
+            <ul className="space-y-3">
+              {d.messagesSupport.map((m, i) => (
+                <li
+                  key={i}
+                  className="rounded-lg border border-slate-100 bg-slate-50 p-3"
+                >
+                  <div className="mb-1 flex flex-wrap items-baseline justify-between gap-2">
+                    <span className="text-sm font-semibold text-ink">
+                      {m.email ?? "—"}
+                      {m.sujet ? (
+                        <span className="font-normal text-slate-500">
+                          {" "}
+                          · {m.sujet}
+                        </span>
+                      ) : null}
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      {formatDateTime(m.created_at)}
+                    </span>
+                  </div>
+                  <p className="whitespace-pre-wrap text-sm text-slate-700">
+                    {m.message}
+                  </p>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* Journal d'événements / erreurs */}
         <section className="rounded-xl border border-slate-200 bg-white p-5">
           <h2 className="mb-3 font-semibold text-ink">
