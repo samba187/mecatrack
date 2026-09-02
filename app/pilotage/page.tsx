@@ -215,6 +215,7 @@ export default async function PagePilotage() {
                     <th className="pb-2">Garage</th>
                     <th className="pb-2">Email</th>
                     <th className="pb-2">Plan</th>
+                    <th className="pb-2 text-center">Dossiers</th>
                     <th className="pb-2">Créé le</th>
                     <th className="pb-2">Fin d&apos;essai</th>
                   </tr>
@@ -228,6 +229,11 @@ export default async function PagePilotage() {
                         <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
                           {LIBELLE_PLAN[g.plan] ?? g.plan}
                         </span>
+                      </td>
+                      <td
+                        className={`py-2 text-center font-medium ${g.dossiers > 0 ? "text-green-700" : "text-slate-300"}`}
+                      >
+                        {g.dossiers}
                       </td>
                       <td className="py-2 text-slate-500">{formatDate(g.cree)}</td>
                       <td className="py-2 text-slate-500">

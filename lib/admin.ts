@@ -77,6 +77,7 @@ export interface Pilotage {
     plan: string;
     cree: string;
     finEssai: string | null;
+    dossiers: number;
   }[];
   journal: {
     niveau: NiveauJournal;
@@ -110,6 +111,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
 
   let journal: Pilotage["journal"] = [];
   let messagesSupport: Pilotage["messagesSupport"] = [];
+  const dossiersParGarage = new Map<string, number>();
   let visitesAujourdhui = 0;
   let visites7j = 0;
   let visitesTotal = 0;
@@ -117,6 +119,10 @@ export async function donneesPilotage(): Promise<Pilotage> {
   if (estDemo()) {
     garages = [demoDb().garage];
     smsMois = demoDb().smsParMois[mois] ?? 0;
+    dossiersParGarage.set(
+      demoDb().garage.id,
+      demoDb().dossiers.filter((d) => d.garage_id === demoDb().garage.id).length
+    );
     visitesAujourdhui = 12;
     visites7j = 43;
     visitesTotal = 128;
@@ -167,6 +173,16 @@ export async function donneesPilotage(): Promise<Pilotage> {
     supportNonTraite = sntRes.count ?? 0;
     journal = (jRes.data ?? []) as Pilotage["journal"];
     messagesSupport = (msgRes.data ?? []) as Pilotage["messagesSupport"];
+
+    const { data: dossiers } = await admin
+      .from("dossiers")
+      .select("garage_id");
+    for (const d of (dossiers ?? []) as { garage_id: string }[]) {
+      dossiersParGarage.set(
+        d.garage_id,
+        (dossiersParGarage.get(d.garage_id) ?? 0) + 1
+      );
+    }
 
     const aujourdhui = new Date().toISOString().slice(0, 10);
     const il7 = new Date(Date.now() - 6 * 86400000)
@@ -224,6 +240,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
       plan: g.plan,
       cree: g.created_at,
       finEssai: g.trial_ends_at,
+      dossiers: dossiersParGarage.get(g.id) ?? 0,
     }));
 
   // ── Stripe : abonnements actifs + paiements réels ──────────────────────
