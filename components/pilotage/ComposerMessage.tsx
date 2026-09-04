@@ -37,7 +37,7 @@ export function ComposerMessage({
 
   if (etat === "envoye") {
     return (
-      <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+      <span className="inline-block shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
         Message envoyé
       </span>
     );
@@ -48,7 +48,7 @@ export function ComposerMessage({
       <button
         type="button"
         onClick={() => setOuvert(true)}
-        className="shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50"
+        className="w-full shrink-0 rounded-lg border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-50 sm:w-auto"
       >
         Écrire un message
       </button>
@@ -56,21 +56,21 @@ export function ComposerMessage({
   }
 
   return (
-    <div className="mt-2 w-full space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
+    <div className="w-full space-y-2 rounded-lg border border-slate-200 bg-slate-50 p-3">
       <input
         value={sujet}
         onChange={(e) => setSujet(e.target.value)}
         placeholder="Sujet"
-        className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm"
+        className="w-full min-w-0 rounded-md border border-slate-200 px-2.5 py-1.5 text-sm"
       />
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         rows={5}
         placeholder="Message"
-        className="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-sm"
+        className="w-full min-w-0 resize-y rounded-md border border-slate-200 px-2.5 py-1.5 text-sm"
       />
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <button
           type="button"
           onClick={envoyer}

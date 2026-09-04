@@ -26,7 +26,7 @@ export function BoutonRelance({ garageId }: { garageId: string }) {
 
   if (etat === "envoye") {
     return (
-      <span className="shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
+      <span className="inline-block shrink-0 rounded-full bg-green-100 px-2.5 py-1 text-xs font-semibold text-green-700">
         Envoyé
       </span>
     );
@@ -37,7 +37,7 @@ export function BoutonRelance({ garageId }: { garageId: string }) {
       type="button"
       onClick={envoyer}
       disabled={etat === "envoi"}
-      className="shrink-0 rounded-lg bg-primary-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-800 disabled:opacity-50"
+      className="w-full shrink-0 rounded-lg bg-primary-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-primary-800 disabled:opacity-50 sm:w-auto"
     >
       {etat === "envoi" ? "Envoi…" : "Envoyer le rappel"}
     </button>

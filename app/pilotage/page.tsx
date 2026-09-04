@@ -210,59 +210,51 @@ export default async function PagePilotage() {
           {d.derniersComptes.length === 0 ? (
             <p className="text-sm text-slate-400">Aucun compte pour l&apos;instant.</p>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="text-left text-xs uppercase tracking-wide text-slate-400">
-                    <th className="pb-2">Garage</th>
-                    <th className="pb-2">Email</th>
-                    <th className="pb-2">Plan</th>
-                    <th className="pb-2 text-center">Dossiers</th>
-                    <th className="pb-2">Créé le</th>
-                    <th className="pb-2">Fin d&apos;essai</th>
-                    <th className="pb-2">Message</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {d.derniersComptes.map((g, i) => (
-                    <tr key={i}>
-                      <td className="py-2 font-medium text-ink">{g.nom}</td>
-                      <td className="py-2 text-slate-500">{g.email ?? "—"}</td>
-                      <td className="py-2">
-                        <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
-                          {LIBELLE_PLAN[g.plan] ?? g.plan}
-                        </span>
-                      </td>
-                      <td
-                        className={`py-2 text-center font-medium ${g.dossiers > 0 ? "text-green-700" : "text-slate-300"}`}
+            <div className="divide-y divide-slate-100">
+              {d.derniersComptes.map((g) => (
+                <div
+                  key={g.id}
+                  className="flex flex-col gap-3 py-3 sm:flex-row sm:items-start sm:justify-between"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="font-medium text-ink">{g.nom}</span>
+                      <span className="rounded bg-slate-100 px-1.5 py-0.5 text-xs font-medium text-slate-600">
+                        {LIBELLE_PLAN[g.plan] ?? g.plan}
+                      </span>
+                      <span
+                        className={`text-xs font-medium ${g.dossiers > 0 ? "text-green-700" : "text-slate-400"}`}
                       >
-                        {g.dossiers}
-                      </td>
-                      <td className="py-2 text-slate-500">{formatDate(g.cree)}</td>
-                      <td className="py-2 text-slate-500">
-                        {g.finEssai ? formatDate(g.finEssai) : "—"}
-                      </td>
-                      <td className="py-2 align-top">
-                        {g.email && (
-                          <ComposerMessage
-                            garageId={g.id}
-                            sujetDefaut={
-                              g.dossiers > 0
-                                ? "Fiavo — suivi de votre prise en main"
-                                : "Fiavo — n'oubliez pas de créer votre premier dossier"
-                            }
-                            messageDefaut={
-                              g.dossiers > 0
-                                ? `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nNous constatons que des dossiers ont été créés sur votre espace. L'équipe reste disponible en cas de question ou de besoin d'aide pour la suite.\n\nL'équipe Fiavo`
-                                : `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nVotre compte a été créé mais aucun dossier n'a encore été enregistré. Nous vous invitons à créer votre premier dossier pour profiter du suivi de réparation en temps réel.\n\nL'équipe Fiavo`
-                            }
-                          />
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                        {g.dossiers} dossier{g.dossiers > 1 ? "s" : ""}
+                      </span>
+                    </div>
+                    <p className="truncate text-xs text-slate-500">
+                      {g.email ?? "—"}
+                    </p>
+                    <p className="text-xs text-slate-400">
+                      Créé le {formatDate(g.cree)}
+                      {g.finEssai && ` · Fin d'essai ${formatDate(g.finEssai)}`}
+                    </p>
+                  </div>
+                  {g.email && (
+                    <div className="sm:w-72 sm:shrink-0">
+                      <ComposerMessage
+                        garageId={g.id}
+                        sujetDefaut={
+                          g.dossiers > 0
+                            ? "Fiavo — suivi de votre prise en main"
+                            : "Fiavo — n'oubliez pas de créer votre premier dossier"
+                        }
+                        messageDefaut={
+                          g.dossiers > 0
+                            ? `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nNous constatons que des dossiers ont été créés sur votre espace. L'équipe reste disponible en cas de question ou de besoin d'aide pour la suite.\n\nL'équipe Fiavo`
+                            : `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nVotre compte a été créé mais aucun dossier n'a encore été enregistré. Nous vous invitons à créer votre premier dossier pour profiter du suivi de réparation en temps réel.\n\nL'équipe Fiavo`
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </section>
@@ -280,9 +272,9 @@ export default async function PagePilotage() {
               {d.garagesSansDossier.map((g) => (
                 <li
                   key={g.id}
-                  className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                  className="flex flex-col gap-2 py-2.5 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <span className="min-w-0 truncate">
+                  <span className="min-w-0 sm:truncate">
                     <span className="font-medium text-ink">{g.nom}</span>
                     <span className="text-slate-400"> · {g.email}</span>
                     <span className="text-slate-400">
