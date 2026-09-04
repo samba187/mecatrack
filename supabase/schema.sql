@@ -33,6 +33,7 @@ alter table public.garages add column if not exists rappels_essai text;
 alter table public.garages add column if not exists tva_defaut numeric(5,2);
 alter table public.garages add column if not exists conditions_paiement text;
 alter table public.garages add column if not exists mentions_devis text;
+alter table public.garages add column if not exists relance_dossier_envoyee boolean not null default false;
 
 -- Consommation SMS par garage et par mois (quota + facturation du dépassement)
 create table if not exists public.sms_usage (

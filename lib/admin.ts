@@ -72,12 +72,19 @@ export interface Pilotage {
     created_at: string;
   }[];
   derniersComptes: {
+    id: string;
     nom: string;
     email: string | null;
     plan: string;
     cree: string;
     finEssai: string | null;
     dossiers: number;
+  }[];
+  garagesSansDossier: {
+    id: string;
+    nom: string;
+    email: string;
+    cree: string;
   }[];
   journal: {
     niveau: NiveauJournal;
@@ -104,7 +111,7 @@ export interface Pilotage {
 
 export async function donneesPilotage(): Promise<Pilotage> {
   const mois = moisCourant();
-  let garages: Garage[];
+  let garages: (Garage & { relance_dossier_envoyee?: boolean })[];
   let smsMois = 0;
   let supportTotal = 0;
   let supportNonTraite = 0;
@@ -164,7 +171,9 @@ export async function donneesPilotage(): Promise<Pilotage> {
         .order("created_at", { ascending: false })
         .limit(15),
     ]);
-    garages = (gRes.data ?? []) as Garage[];
+    garages = (gRes.data ?? []) as (Garage & {
+      relance_dossier_envoyee?: boolean;
+    })[];
     smsMois = (sRes.data ?? []).reduce(
       (s, r) => s + ((r.count as number | undefined) ?? 0),
       0
@@ -209,6 +218,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
   let nouveauxSemaine = 0;
   let nouveauxMois = 0;
   const essaisBientot: Pilotage["essaisBientot"] = [];
+  const garagesSansDossier: Pilotage["garagesSansDossier"] = [];
 
   for (const g of garages) {
     if (g.plan === "atelier") atelier++;
@@ -225,8 +235,23 @@ export async function donneesPilotage(): Promise<Pilotage> {
     const cree = new Date(g.created_at).getTime();
     if (now - cree < 7 * jour) nouveauxSemaine++;
     if (now - cree < 30 * jour) nouveauxMois++;
+
+    // Inscrit depuis plus de 24h, aucun dossier créé, jamais relancé : à
+    // proposer pour un rappel manuel (jamais envoyé automatiquement).
+    if (
+      g.plan !== "expired" &&
+      g.email &&
+      !g.relance_dossier_envoyee &&
+      now - cree >= jour &&
+      (dossiersParGarage.get(g.id) ?? 0) === 0
+    ) {
+      garagesSansDossier.push({ id: g.id, nom: g.nom, email: g.email, cree: g.created_at });
+    }
   }
   essaisBientot.sort((a, b) => a.jours - b.jours);
+  garagesSansDossier.sort(
+    (a, b) => new Date(a.cree).getTime() - new Date(b.cree).getTime()
+  );
 
   const derniersComptes = [...garages]
     .sort(
@@ -235,6 +260,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     )
     .slice(0, 12)
     .map((g) => ({
+      id: g.id,
       nom: g.nom,
       email: g.email,
       plan: g.plan,
@@ -311,6 +337,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     supportNonTraite,
     messagesSupport,
     derniersComptes,
+    garagesSansDossier,
     journal,
     stripe: stripeInfo,
   };

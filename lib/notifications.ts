@@ -394,6 +394,44 @@ export async function emailBienvenue(garage: Garage, urlDashboard: string) {
   );
 }
 
+/**
+ * Rappel « vous n'avez pas encore créé de dossier » — envoyé uniquement à la
+ * main depuis /pilotage (jamais automatiquement), pour garder le contrôle sur
+ * quand et à qui il part.
+ */
+export async function emailRelanceDossier(garage: Garage, urlDashboard: string) {
+  if (!garage.email) return;
+  await envoyerEmail(
+    garage.email,
+    "N'oubliez pas de créer votre premier dossier sur Fiavo",
+    gabarit(
+      `${garage.nom}, on vous attend !`,
+      `<p>Vous vous êtes inscrit sur Fiavo mais vous n'avez pas encore créé de dossier.</p>
+       <p>Ça prend deux minutes : créez un dossier pour votre prochain véhicule, ajoutez une photo, et envoyez le lien de suivi à votre client. Il verra l'avancement de sa réparation en temps réel, sans vous appeler.</p>
+       <p>Une question, un blocage ? Répondez simplement à cet email.</p>`,
+      { label: "Créer mon premier dossier", url: urlDashboard }
+    )
+  );
+}
+
+/**
+ * Message libre à un garage, envoyé uniquement à la main depuis /pilotage
+ * (bouton « Écrire un message »). Reprend le gabarit de marque standard ;
+ * le contenu est fourni par le sujet/message saisis dans le pilotage.
+ */
+export async function emailPersonnalise(
+  garage: Garage,
+  sujet: string,
+  message: string
+) {
+  if (!garage.email) return;
+  const corps = echapperHtml(message)
+    .split(/\n{2,}/)
+    .map((p) => `<p style="margin:0 0 14px">${p.replace(/\n/g, "<br>")}</p>`)
+    .join("");
+  await envoyerEmail(garage.email, sujet, gabarit(sujet, corps));
+}
+
 export async function emailFinEssai(
   garage: Garage,
   joursRestants: number,

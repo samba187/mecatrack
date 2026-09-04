@@ -2,6 +2,8 @@ import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
 import { donneesPilotage, jetonPilotage } from "@/lib/admin";
 import { formatDate, formatDateTime, formatEuros } from "@/lib/utils";
+import { BoutonRelance } from "@/components/pilotage/BoutonRelance";
+import { ComposerMessage } from "@/components/pilotage/ComposerMessage";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -218,6 +220,7 @@ export default async function PagePilotage() {
                     <th className="pb-2 text-center">Dossiers</th>
                     <th className="pb-2">Créé le</th>
                     <th className="pb-2">Fin d&apos;essai</th>
+                    <th className="pb-2">Message</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -239,6 +242,23 @@ export default async function PagePilotage() {
                       <td className="py-2 text-slate-500">
                         {g.finEssai ? formatDate(g.finEssai) : "—"}
                       </td>
+                      <td className="py-2 align-top">
+                        {g.email && (
+                          <ComposerMessage
+                            garageId={g.id}
+                            sujetDefaut={
+                              g.dossiers > 0
+                                ? "Fiavo — suivi de votre prise en main"
+                                : "Fiavo — n'oubliez pas de créer votre premier dossier"
+                            }
+                            messageDefaut={
+                              g.dossiers > 0
+                                ? `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nNous constatons que des dossiers ont été créés sur votre espace. L'équipe reste disponible en cas de question ou de besoin d'aide pour la suite.\n\nL'équipe Fiavo`
+                                : `Bonjour,\n\nCeci est une notification automatique Fiavo.\n\nVotre compte a été créé mais aucun dossier n'a encore été enregistré. Nous vous invitons à créer votre premier dossier pour profiter du suivi de réparation en temps réel.\n\nL'équipe Fiavo`
+                            }
+                          />
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -246,6 +266,36 @@ export default async function PagePilotage() {
             </div>
           )}
         </section>
+
+        {/* Inscrits sans dossier créé : rappel manuel uniquement, jamais auto */}
+        {d.garagesSansDossier.length > 0 && (
+          <section className="rounded-xl border border-slate-200 bg-white p-5">
+            <h2 className="mb-1 font-semibold text-ink">
+              Inscrits sans dossier créé
+            </h2>
+            <p className="mb-3 text-xs text-slate-400">
+              Le rappel ne part que si vous cliquez — jamais automatique.
+            </p>
+            <ul className="divide-y divide-slate-100">
+              {d.garagesSansDossier.map((g) => (
+                <li
+                  key={g.id}
+                  className="flex items-center justify-between gap-3 py-2.5 text-sm"
+                >
+                  <span className="min-w-0 truncate">
+                    <span className="font-medium text-ink">{g.nom}</span>
+                    <span className="text-slate-400"> · {g.email}</span>
+                    <span className="text-slate-400">
+                      {" "}
+                      · inscrit le {formatDate(g.cree)}
+                    </span>
+                  </span>
+                  <BoutonRelance garageId={g.id} />
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
 
         {/* Messages de support */}
         {d.messagesSupport.length > 0 && (
