@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "crypto";
-import { estDemo } from "./config";
+import { DEMO_MODE, estDemo } from "./config";
 import { demoDb } from "./demo/store";
 import { stripe, stripeConfigure } from "./stripe";
 import { supabaseAdmin } from "./supabase/server";
@@ -123,7 +123,11 @@ export async function donneesPilotage(): Promise<Pilotage> {
   let visites7j = 0;
   let visitesTotal = 0;
 
-  if (estDemo()) {
+  // Le pilotage lit TOUJOURS la vraie base dès que Supabase est configuré. On
+  // teste DEMO_MODE (absence de Supabase, en local/build) et non estDemo() :
+  // ce dernier dépend du cookie mt_demo, qu'un simple passage par « Explorer la
+  // démo » laisse traîner et qui polluerait le pilotage avec des données bidon.
+  if (DEMO_MODE) {
     garages = [demoDb().garage];
     smsMois = demoDb().smsParMois[mois] ?? 0;
     dossiersParGarage.set(
@@ -280,7 +284,7 @@ export async function donneesPilotage(): Promise<Pilotage> {
     renouvellements: [],
     erreur: null,
   };
-  if (stripeConfigure() && !estDemo()) {
+  if (stripeConfigure() && !DEMO_MODE) {
     try {
       const s = stripe();
       const subs = await s.subscriptions.list({ status: "active", limit: 100 });
