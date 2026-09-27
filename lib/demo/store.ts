@@ -556,30 +556,48 @@ function persistanceActive(cle: string): boolean {
   return !DEMO_MODE && cle !== CLE_LOCALE;
 }
 
-async function lireEnBase(cle: string): Promise<DemoDb | null> {
+/**
+ * Résultat d'une lecture. On distingue « pas encore de session » de « lecture
+ * impossible » : dans le second cas il ne faut surtout pas écrire un seed neuf
+ * par-dessus, sinon une erreur passagère détruit la démo du visiteur.
+ */
+type Lecture =
+  | { etat: "trouvee"; db: DemoDb }
+  | { etat: "absente" }
+  | { etat: "erreur" };
+
+async function lireEnBase(cle: string): Promise<Lecture> {
   try {
     const { supabaseAdmin } = await import("../supabase/server");
-    const { data } = await supabaseAdmin()
+    const { data, error } = await supabaseAdmin()
       .from("demo_sessions")
       .select("donnees")
       .eq("id", cle)
       .maybeSingle();
-    return (data?.donnees as DemoDb | undefined) ?? null;
+    if (error) {
+      console.error("demo_sessions lecture échouée", error);
+      return { etat: "erreur" };
+    }
+    const db = data?.donnees as DemoDb | undefined;
+    return db ? { etat: "trouvee", db } : { etat: "absente" };
   } catch (e) {
-    // Table absente ou base injoignable : la démo continue en mémoire.
-    console.error("demo_sessions lecture échouée", e);
-    return null;
+    // Base injoignable : la démo continue en mémoire, sans rien écraser.
+    console.error("demo_sessions lecture impossible", e);
+    return { etat: "erreur" };
   }
 }
 
 async function ecrireEnBase(cle: string, db: DemoDb): Promise<void> {
   try {
     const { supabaseAdmin } = await import("../supabase/server");
-    await supabaseAdmin()
+    const { error } = await supabaseAdmin()
       .from("demo_sessions")
       .upsert({ id: cle, donnees: db, updated_at: new Date().toISOString() });
+    // PostgREST renvoie l'erreur dans la réponse, sans lever : sans ce test,
+    // une table absente ou un souci de droits passait totalement inaperçu.
+    if (error) console.error("demo_sessions écriture refusée", error);
   } catch (e) {
-    console.error("demo_sessions écriture échouée", e);
+    console.error("demo_sessions écriture impossible", e);
   }
 }
 
@@ -592,13 +610,18 @@ export async function demoDb(): Promise<DemoDb> {
   const enMemoire = cacheMemoire.get(cle);
   if (enMemoire) return enMemoire;
 
-  const persistee = persistanceActive(cle) ? await lireEnBase(cle) : null;
-  const db = persistee ?? seed();
+  const lecture: Lecture = persistanceActive(cle)
+    ? await lireEnBase(cle)
+    : { etat: "absente" };
+  const db = lecture.etat === "trouvee" ? lecture.db : seed();
   memoriser(cle, db);
-  // Nouvelle session : on l'enregistre tout de suite, pour que le visiteur
-  // retrouve son garage même si la requête suivante tombe sur une autre
-  // instance sans avoir rien modifié entre-temps.
-  if (!persistee && persistanceActive(cle)) await ecrireEnBase(cle, db);
+  // Session vraiment nouvelle : on l'enregistre tout de suite, pour que le
+  // visiteur retrouve son garage même si la requête suivante tombe sur une
+  // autre instance sans qu'il ait rien modifié entre-temps. Sur une lecture en
+  // erreur on n'écrit rien : la session stockée est peut-être intacte.
+  if (lecture.etat === "absente" && persistanceActive(cle)) {
+    await ecrireEnBase(cle, db);
+  }
   empreintes.set(cle, JSON.stringify(db));
   return db;
 }
