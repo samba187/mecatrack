@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { DEMO_MODE } from "@/lib/config";
+import { estDemo } from "@/lib/config";
 import { demoDb } from "@/lib/demo/store";
 import { getGarageCourant } from "@/lib/db";
 import { priceIdPourPlan, stripe, stripeConfigure } from "@/lib/stripe";
@@ -21,8 +21,12 @@ export async function GET(request: NextRequest) {
       ? ("atelier" as const)
       : ("pro" as const);
 
-  // Mode démo : simule la souscription sans paiement.
-  if (DEMO_MODE) {
+  // Mode démo : simule la souscription sans paiement. estDemo() et non
+  // DEMO_MODE : en production Supabase est configuré (DEMO_MODE faux), donc un
+  // visiteur de la démo partait sur un VRAI paiement Stripe avec le garage
+  // fictif — création d'un client « Garage Lemoine » en base Stripe, et un
+  // paiement qui n'aurait provisionné aucun compte (garage_id inexistant).
+  if (estDemo()) {
     demoDb().garage.plan = plan;
     return NextResponse.redirect(`${compte}?abonnement=demo`);
   }

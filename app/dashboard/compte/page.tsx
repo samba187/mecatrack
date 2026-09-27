@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { BadgeCheck, Car, CreditCard, MessageSquare } from "lucide-react";
 import { FormulaireGarage } from "@/components/dashboard/FormulaireGarage";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { DEMO_MODE } from "@/lib/config";
+import { estDemo } from "@/lib/config";
 import {
   getGarageCourant,
   smsCeMois,
@@ -169,7 +169,7 @@ export default async function PageCompte({
                 ? `Fin de l'essai le ${formatDate(garage.trial_ends_at)} — aucune carte bancaire requise pendant l'essai.`
                 : "Sans engagement : résiliable à tout moment en un clic."}
             </span>
-            {abonne && !DEMO_MODE && (
+            {abonne && !estDemo() && (
               <a
                 href="/api/stripe/portal"
                 className="inline-flex items-center gap-2 font-medium text-primary-700 hover:underline"

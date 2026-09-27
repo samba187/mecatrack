@@ -21,6 +21,13 @@ export const COOKIE_DEMO = "mt_demo";
 export const DUREE_DEMO = 60 * 60 * 24 * 30; // 30 jours
 
 /**
+ * Jeton de suivi réservé à l'exemple public (« Voir un suivi client » sur
+ * l'accueil). Il doit répondre pour n'importe quel visiteur, même sans
+ * session de démo : c'est une vitrine, pas une page protégée.
+ */
+export const TOKEN_SUIVI_DEMO = "demo";
+
+/**
  * Vrai si la requête courante doit utiliser les données de démo : soit l'app
  * est en mode démo global, soit le visiteur a lancé une session de démo
  * (cookie) — ce qui permet à la démo de coexister avec les vrais comptes une

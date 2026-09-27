@@ -1,6 +1,6 @@
 import "server-only";
 import { randomBytes, randomUUID } from "crypto";
-import { estDemo, APP_URL, lienDocument } from "./config";
+import { estDemo, APP_URL, lienDocument, TOKEN_SUIVI_DEMO } from "./config";
 import { demoDb } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
 import {
@@ -1331,7 +1331,9 @@ export async function marquerMessagesLus(
 export async function getSuiviParToken(
   token: string
 ): Promise<SuiviPublic | null> {
-  if (estDemo()) {
+  // Le jeton d'exemple répond toujours : l'accueil le met en avant auprès de
+  // visiteurs qui n'ont pas de session de démo, et il renvoyait un 404.
+  if (estDemo() || token === TOKEN_SUIVI_DEMO) {
     const db = demoDb();
     const dossier = db.dossiers.find((d) => d.token_public === token);
     if (!dossier) return null;
@@ -1426,7 +1428,9 @@ export async function repondreDevis(
   let dossier: Dossier;
   let devis: Devis;
 
-  if (estDemo()) {
+  // Le jeton d'exemple se comporte comme la démo pour tout le monde : sans ça,
+  // signer le devis depuis la vitrine renvoyait « Devis introuvable ».
+  if (estDemo() || token === TOKEN_SUIVI_DEMO) {
     const db = demoDb();
     const d = db.dossiers.find((x) => x.token_public === token);
     const v = db.devis.find((x) => x.id === devisId);
@@ -1471,7 +1475,14 @@ export async function repondreDevis(
     devis = { ...(v as Devis), ...patch } as Devis;
   }
 
-  const garage = await garagePourDossier(dossier);
+  // Vitrine publique (/suivi/demo sans session de démo) : aucune notification.
+  // Le garage fictif n'existe pas en base, donc garagePourDossier renvoie déjà
+  // null — on l'écrit explicitement pour qu'un changement futur ne fasse pas
+  // partir de vrais emails/SMS vers « Garage Lemoine » à chaque visiteur.
+  const garage =
+    !estDemo() && token === TOKEN_SUIVI_DEMO
+      ? null
+      : await garagePourDossier(dossier);
   if (garage) {
     const accepte = devis.statut === "accepte";
     await Promise.all([
@@ -1511,7 +1522,8 @@ export async function envoyerMessageClient(
     created_at: new Date().toISOString(),
   };
 
-  if (estDemo()) {
+  // Idem : répondre depuis la page d'exemple publique ne doit pas échouer.
+  if (estDemo() || token === TOKEN_SUIVI_DEMO) {
     const db = demoDb();
     dossier = db.dossiers.find((d) => d.token_public === token) ?? null;
     if (!dossier) throw new Error("Dossier introuvable");
@@ -1537,7 +1549,11 @@ export async function envoyerMessageClient(
     if (error) throw new Error(error.message);
   }
 
-  const garage = await garagePourDossier(dossier);
+  // Idem : la vitrine publique ne notifie personne.
+  const garage =
+    !estDemo() && token === TOKEN_SUIVI_DEMO
+      ? null
+      : await garagePourDossier(dossier);
   if (garage) {
     await Promise.all([
       emailNouveauMessage(
