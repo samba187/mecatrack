@@ -131,11 +131,12 @@ export async function donneesPilotage(): Promise<Pilotage> {
   // ce dernier dépend du cookie mt_demo, qu'un simple passage par « Explorer la
   // démo » laisse traîner et qui polluerait le pilotage avec des données bidon.
   if (DEMO_MODE) {
-    garages = [demoDb().garage];
-    smsMois = demoDb().smsParMois[mois] ?? 0;
+    const db = await demoDb();
+    garages = [db.garage];
+    smsMois = db.smsParMois[mois] ?? 0;
     dossiersParGarage.set(
-      demoDb().garage.id,
-      demoDb().dossiers.filter((d) => d.garage_id === demoDb().garage.id).length
+      db.garage.id,
+      db.dossiers.filter((d) => d.garage_id === db.garage.id).length
     );
     visitesAujourdhui = 12;
     visites7j = 43;

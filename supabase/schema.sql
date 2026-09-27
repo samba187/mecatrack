@@ -75,6 +75,20 @@ create table if not exists public.support_messages (
 );
 alter table public.support_messages enable row level security;
 
+-- Sessions de démonstration : un état par visiteur (clé = cookie mt_demo).
+-- Sans ça la démo vivait dans la mémoire de l'instance serverless : partagée
+-- entre tous les visiteurs simultanés, et perdue à chaque redémarrage.
+-- Jamais exposée au client : accès par le service role uniquement.
+create table if not exists public.demo_sessions (
+  id text primary key,
+  donnees jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists demo_sessions_updated_idx
+  on public.demo_sessions(updated_at);
+alter table public.demo_sessions enable row level security;
+
 create table public.dossiers (
   id uuid primary key default gen_random_uuid(),
   garage_id uuid not null references public.garages(id) on delete cascade,

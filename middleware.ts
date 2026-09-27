@@ -8,14 +8,14 @@ export async function middleware(request: NextRequest) {
   // Session de démonstration (le visiteur a cliqué « Voir la démo ») : on laisse
   // parcourir le dashboard sans compte, mais /auth reste accessible pour
   // s'inscrire pour de vrai.
-  if (
-    request.cookies.get(COOKIE_DEMO)?.value === "1" &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
+  const session = request.cookies.get(COOKIE_DEMO)?.value;
+  if (session && !request.nextUrl.pathname.startsWith("/auth")) {
     // Réarme le cookie : tant que le visiteur explore, la démo ne doit jamais
-    // expirer sous ses pieds et le renvoyer vers /auth/login.
+    // expirer sous ses pieds et le renvoyer vers /auth/login. Au passage, un
+    // cookie à l'ancien format (« 1 », partagé entre tous les visiteurs) est
+    // remplacé par un identifiant propre au visiteur.
     const res = NextResponse.next();
-    res.cookies.set(COOKIE_DEMO, "1", {
+    res.cookies.set(COOKIE_DEMO, session === "1" ? crypto.randomUUID() : session, {
       path: "/",
       maxAge: DUREE_DEMO,
       sameSite: "lax",

@@ -117,10 +117,16 @@ export async function envoyerSms(
 export async function envoyerEmail(
   vers: string,
   sujet: string,
-  html: string
+  html: string,
+  options?: { memeEnDemo?: boolean }
 ): Promise<void> {
-  // Comme pour les SMS : aucune sortie réelle depuis la démo publique.
-  if (estDemo()) {
+  // Comme pour les SMS : aucune sortie réelle depuis la démo publique — un
+  // visiteur pourrait sinon faire partir des messages à des tiers, à nos frais.
+  // Seule exception : memeEnDemo, réservé aux emails dont le destinataire est
+  // notre propre adresse de support (aucun tiers joignable, donc rien à
+  // détourner) et qu'on veut surtout ne pas perdre : une question posée depuis
+  // la démo est un prospect.
+  if (estDemo() && !options?.memeEnDemo) {
     console.log(`[Email démo — non envoyé] → ${vers} : ${sujet}`);
     return;
   }
@@ -326,17 +332,32 @@ export async function emailSupport(
   sujet: string,
   message: string
 ) {
+  // Un message envoyé depuis la démo vient d'un visiteur, pas d'un client : le
+  // garage et l'email affichés sont ceux du garage fictif, seul le texte est
+  // réel. On le signale au lieu de laisser croire à un message de « Garage
+  // Lemoine », et on l'envoie quand même — c'est un prospect.
+  const demo = estDemo();
+  const prefixe = demo ? "[Support Fiavo — DÉMO] " : "[Support Fiavo] ";
+  const avertissement = demo
+    ? `<p style="margin:0 0 16px;padding:10px 12px;background:#fff7ed;border-left:3px solid #f97316">
+         <strong>Envoyé depuis la démonstration publique.</strong><br />
+         Les coordonnées ci-dessous sont celles du garage fictif : répondez
+         plutôt au visiteur s'il a laissé un moyen de contact dans son message.
+       </p>`
+    : "";
   await envoyerEmail(
     SUPPORT_EMAIL,
-    `[Support Fiavo] ${sujet || "Nouveau message"} — ${garage.nom}`,
+    `${prefixe}${sujet || "Nouveau message"} — ${garage.nom}`,
     gabarit(
       `Message de ${echapperHtml(garage.nom)}`,
-      `<p style="margin:0 0 8px"><strong>Garage :</strong> ${echapperHtml(garage.nom)}</p>
+      `${avertissement}
+       <p style="margin:0 0 8px"><strong>Garage :</strong> ${echapperHtml(garage.nom)}</p>
        <p style="margin:0 0 8px"><strong>Email :</strong> ${echapperHtml(garage.email ?? "—")}</p>
        <p style="margin:0 0 8px"><strong>Téléphone :</strong> ${echapperHtml(garage.telephone ?? "—")}</p>
        <p style="margin:0 0 16px"><strong>Sujet :</strong> ${echapperHtml(sujet || "—")}</p>
        <p style="white-space:pre-wrap;margin:0">${echapperHtml(message)}</p>`
-    )
+    ),
+    { memeEnDemo: true }
   );
 }
 

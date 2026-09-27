@@ -42,7 +42,9 @@ export function estDemo(): boolean {
     // l'inscription qui le retirent (quitterDemo), pas la simple présence d'un
     // ancien cookie de session — sans quoi une session expirée qui traîne
     // renverrait vers la page de connexion depuis la démo.
-    return cookies().get(COOKIE_DEMO)?.value === "1";
+    // Le cookie porte l'identifiant de la session de démo (anciennement « 1 »,
+    // encore accepté le temps que le middleware le remplace).
+    return !!cookies().get(COOKIE_DEMO)?.value;
   } catch {
     return false;
   }

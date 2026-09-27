@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { journaliser } from "@/lib/admin";
 import { APP_URL } from "@/lib/config";
+import { purgerDemos } from "@/lib/demo/store";
 import { emailFinEssai } from "@/lib/notifications";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import type { Garage } from "@/lib/types";
@@ -75,9 +76,14 @@ export async function GET(request: Request) {
     envoyes++;
   }
 
+  // Les sessions de démonstration inactives n'ont plus d'utilité : le cookie du
+  // visiteur a expiré depuis longtemps (DUREE_DEMO = 30 jours).
+  const demosPurgees = await purgerDemos();
+
   return NextResponse.json({
     ok: true,
     essaisVerifies: garages.length,
     rappelsEnvoyes: envoyes,
+    demosPurgees,
   });
 }

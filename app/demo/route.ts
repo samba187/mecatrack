@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextResponse, type NextRequest } from "next/server";
 import { COOKIE_DEMO, DUREE_DEMO } from "@/lib/config";
 
@@ -22,7 +23,9 @@ export function GET(request: NextRequest) {
   const res = NextResponse.redirect(
     new URL("/dashboard/dossiers", request.url)
   );
-  res.cookies.set(COOKIE_DEMO, "1", {
+  // Un identifiant par visiteur : chacun explore sa propre démo. Avant, tous
+  // les visiteurs d'une même instance partageaient le même garage fictif.
+  res.cookies.set(COOKIE_DEMO, randomUUID(), {
     path: "/",
     maxAge: DUREE_DEMO,
     sameSite: "lax",

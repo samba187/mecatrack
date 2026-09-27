@@ -1,7 +1,7 @@
 import "server-only";
 import { randomBytes, randomUUID } from "crypto";
 import { estDemo, APP_URL, lienDocument, TOKEN_SUIVI_DEMO } from "./config";
-import { demoDb } from "./demo/store";
+import { demoDb, sauverDemo } from "./demo/store";
 import { supabaseAdmin, supabaseServer } from "./supabase/server";
 import {
   maxPhotosParDossier,
@@ -50,7 +50,7 @@ async function creerNotification(
   corps: string
 ): Promise<void> {
   if (estDemo()) {
-    demoDb().notifications.unshift({
+    (await demoDb()).notifications.unshift({
       id: randomUUID(),
       garage_id: garage.id,
       type,
@@ -60,6 +60,7 @@ async function creerNotification(
       lu: false,
       created_at: new Date().toISOString(),
     });
+    await sauverDemo();
     return;
   }
   await supabaseAdmin().from("notifications").insert({
@@ -76,7 +77,8 @@ export async function listNotifications(
   limite = 30
 ): Promise<Notification[]> {
   if (estDemo()) {
-    return demoDb()
+    await sauverDemo();
+    return (await demoDb())
       .notifications.filter((n) => n.garage_id === garage.id)
       .slice(0, limite);
   }
@@ -93,7 +95,8 @@ export async function compteNotificationsNonLues(
   garage: Garage
 ): Promise<number> {
   if (estDemo()) {
-    return demoDb().notifications.filter(
+    await sauverDemo();
+    return (await demoDb()).notifications.filter(
       (n) => n.garage_id === garage.id && !n.lu
     ).length;
   }
@@ -107,9 +110,10 @@ export async function compteNotificationsNonLues(
 
 export async function marquerNotificationsLues(garage: Garage): Promise<void> {
   if (estDemo()) {
-    demoDb()
+    (await demoDb())
       .notifications.filter((n) => n.garage_id === garage.id)
       .forEach((n) => (n.lu = true));
+    await sauverDemo();
     return;
   }
   await supabaseServer()
@@ -123,7 +127,8 @@ export async function marquerNotificationsLues(garage: Garage): Promise<void> {
 
 export async function listPrestations(garage: Garage): Promise<Prestation[]> {
   if (estDemo()) {
-    return demoDb()
+    await sauverDemo();
+    return (await demoDb())
       .prestations.filter((p) => p.garage_id === garage.id)
       .sort((a, b) => a.designation.localeCompare(b.designation, "fr"));
   }
@@ -146,7 +151,8 @@ export async function creerPrestation(
     prix_ht: input.prix_ht,
   };
   if (estDemo()) {
-    demoDb().prestations.push(prestation);
+    (await demoDb()).prestations.push(prestation);
+    await sauverDemo();
     return prestation;
   }
   const { data, error } = await supabaseServer()
@@ -168,8 +174,9 @@ export async function supprimerPrestation(
   prestationId: string
 ): Promise<void> {
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.prestations = db.prestations.filter((p) => p.id !== prestationId);
+    await sauverDemo();
     return;
   }
   await supabaseServer()
@@ -182,8 +189,9 @@ export async function supprimerPrestation(
 async function prochainNumeroDevis(garage: Garage): Promise<string> {
   const annee = new Date().getFullYear();
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.compteurDevis += 1;
+    await sauverDemo();
     return `DEV-${annee}-${String(db.compteurDevis).padStart(4, "0")}`;
   }
   const { count } = await supabaseAdmin()
@@ -204,8 +212,9 @@ async function prochainNumeroDevis(garage: Garage): Promise<string> {
 async function prochainNumeroFacture(garage: Garage): Promise<string> {
   const annee = new Date().getFullYear();
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.compteurFacture += 1;
+    await sauverDemo();
     return `FAC-${annee}-${String(db.compteurFacture).padStart(4, "0")}`;
   }
   const dossierIds =
@@ -226,7 +235,7 @@ async function prochainNumeroFacture(garage: Garage): Promise<string> {
 // ── Garage courant ──────────────────────────────────────────────────────────
 
 export async function getGarageCourant(): Promise<Garage | null> {
-  if (estDemo()) return demoDb().garage;
+  if (estDemo()) return (await demoDb()).garage;
   const supabase = supabaseServer();
   const {
     data: { user },
@@ -261,7 +270,8 @@ export async function majGarage(
   >
 ): Promise<void> {
   if (estDemo()) {
-    Object.assign(demoDb().garage, patch);
+    Object.assign((await demoDb()).garage, patch);
+    await sauverDemo();
     return;
   }
   const supabase = supabaseServer();
@@ -287,11 +297,12 @@ export async function listDossiers(
   let messages: Message[];
 
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     photos = db.photos;
     devis = db.devis;
     messages = db.messages;
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { data, error } = await supabase
@@ -369,11 +380,12 @@ export async function getDossierComplet(
   dossierId: string
 ): Promise<DossierComplet | null> {
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find(
       (d) => d.id === dossierId && d.garage_id === garage.id
     );
     if (!dossier) return null;
+    await sauverDemo();
     return {
       dossier,
       photos: db.photos.filter((p) => p.dossier_id === dossierId),
@@ -494,7 +506,7 @@ export async function creerDossier(
   };
 
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.dossiers.push(dossier);
     db.historique.push({
       id: randomUUID(),
@@ -504,6 +516,7 @@ export async function creerDossier(
       note: null,
       created_at: maintenant,
     });
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { error } = await supabase.from("dossiers").insert({
@@ -545,11 +558,12 @@ export async function majDossier(
   >
 ): Promise<void> {
   if (estDemo()) {
-    const d = demoDb().dossiers.find(
+    const d = (await demoDb()).dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
     );
     if (!d) throw new Error("Dossier introuvable");
     Object.assign(d, patch, { updated_at: new Date().toISOString() });
+    await sauverDemo();
     return;
   }
   const supabase = supabaseServer();
@@ -570,7 +584,7 @@ export async function changerStatut(
   const maintenant = new Date().toISOString();
 
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     dossier =
       db.dossiers.find(
         (x) => x.id === dossierId && x.garage_id === garage.id
@@ -589,6 +603,7 @@ export async function changerStatut(
       note: null,
       created_at: maintenant,
     });
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { data } = await supabase
@@ -636,7 +651,7 @@ export async function ajouterPhoto(
   const max = maxPhotosParDossier(garage);
 
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
     );
@@ -655,6 +670,7 @@ export async function ajouterPhoto(
       created_at: new Date().toISOString(),
     };
     db.photos.push(photo);
+    await sauverDemo();
     return photo;
   }
 
@@ -713,10 +729,11 @@ export async function majPhoto(
   patch: Partial<Pick<Photo, "legende" | "visible_client">>
 ): Promise<void> {
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const photo = db.photos.find((p) => p.id === photoId);
     if (!photo) throw new Error("Photo introuvable");
     Object.assign(photo, patch);
+    await sauverDemo();
     return;
   }
   const supabase = supabaseServer();
@@ -732,8 +749,9 @@ export async function supprimerPhoto(
   photoId: string
 ): Promise<void> {
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.photos = db.photos.filter((p) => p.id !== photoId);
+    await sauverDemo();
     return;
   }
   const supabase = supabaseServer();
@@ -787,13 +805,14 @@ export async function creerDevis(
 
   let dossier: Dossier | null = null;
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     dossier =
       db.dossiers.find(
         (x) => x.id === dossierId && x.garage_id === garage.id
       ) ?? null;
     if (!dossier) throw new Error("Dossier introuvable");
     db.devis.push(devis);
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { data } = await supabase
@@ -839,7 +858,7 @@ export async function creerFacture(
 ): Promise<string> {
   const maintenant = new Date().toISOString();
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
     );
@@ -851,6 +870,7 @@ export async function creerFacture(
     if (devis.facture_numero) return devis.facture_numero;
     devis.facture_numero = await prochainNumeroFacture(garage);
     devis.facture_at = maintenant;
+    await sauverDemo();
     return devis.facture_numero;
   }
   const supabase = supabaseServer();
@@ -934,10 +954,11 @@ export async function statsGarage(garage: Garage): Promise<StatsGarage> {
   let dossiers: Dossier[];
   let devis: Devis[];
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     const ids = new Set(dossiers.map((d) => d.id));
     devis = db.devis.filter((v) => ids.has(v.dossier_id));
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { data: doss } = await supabase
@@ -1026,7 +1047,8 @@ export async function historiqueVehicule(
   const cible = normImmat(immat);
   let dossiers: Dossier[];
   if (estDemo()) {
-    dossiers = demoDb().dossiers.filter((d) => d.garage_id === garage.id);
+    dossiers = (await demoDb()).dossiers.filter((d) => d.garage_id === garage.id);
+    await sauverDemo();
   } else {
     const { data } = await supabaseServer()
       .from("dossiers")
@@ -1090,7 +1112,8 @@ export async function vehiculesCeMois(garage: Garage): Promise<number> {
   const y = now.getFullYear();
   const m = now.getMonth();
   if (estDemo()) {
-    return demoDb().dossiers.filter((d) => {
+    await sauverDemo();
+    return (await demoDb()).dossiers.filter((d) => {
       if (d.garage_id !== garage.id) return false;
       const dc = new Date(d.created_at);
       return dc.getFullYear() === y && dc.getMonth() === m;
@@ -1109,7 +1132,8 @@ export async function vehiculesCeMois(garage: Garage): Promise<number> {
 export async function smsCeMois(garage: Garage): Promise<number> {
   const mois = moisCourant();
   if (estDemo()) {
-    return demoDb().smsParMois[mois] ?? 0;
+    await sauverDemo();
+    return (await demoDb()).smsParMois[mois] ?? 0;
   }
   // Lecture via le service_role : la table sms_usage a RLS activé sans policy
   // de lecture, donc la session utilisateur renverrait toujours 0. Le compteur
@@ -1131,8 +1155,9 @@ export async function incrementerSmsCeMois(
 ): Promise<void> {
   const mois = moisCourant();
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     db.smsParMois[mois] = (db.smsParMois[mois] ?? 0) + n;
+    await sauverDemo();
     return;
   }
   const admin = supabaseAdmin();
@@ -1174,10 +1199,11 @@ export async function listTousDevis(
   let devis: Devis[];
   let dossiers: Dossier[];
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     dossiers = db.dossiers.filter((d) => d.garage_id === garage.id);
     const ids = new Set(dossiers.map((d) => d.id));
     devis = db.devis.filter((v) => ids.has(v.dossier_id));
+    await sauverDemo();
   } else {
     const supabase = supabaseServer();
     const { data: doss } = await supabase
@@ -1234,13 +1260,14 @@ export async function getDocumentParToken(
   devisId: string
 ): Promise<{ garage: Garage; dossier: Dossier; devis: Devis } | null> {
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find((d) => d.token_public === token);
     if (!dossier) return null;
     const devis = db.devis.find(
       (v) => v.id === devisId && v.dossier_id === dossier.id
     );
     if (!devis) return null;
+    await sauverDemo();
     return { garage: db.garage, dossier, devis };
   }
   const admin = supabaseAdmin();
@@ -1286,12 +1313,13 @@ export async function envoyerMessageGarage(
     created_at: new Date().toISOString(),
   };
   if (estDemo()) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find(
       (x) => x.id === dossierId && x.garage_id === garage.id
     );
     if (!dossier) throw new Error("Dossier introuvable");
     db.messages.push(message);
+    await sauverDemo();
     return message;
   }
   const supabase = supabaseServer();
@@ -1311,11 +1339,12 @@ export async function marquerMessagesLus(
   dossierId: string
 ): Promise<void> {
   if (estDemo()) {
-    demoDb()
+    (await demoDb())
       .messages.filter(
         (m) => m.dossier_id === dossierId && m.auteur === "client"
       )
       .forEach((m) => (m.lu = true));
+    await sauverDemo();
     return;
   }
   const supabase = supabaseServer();
@@ -1334,10 +1363,11 @@ export async function getSuiviParToken(
   // Le jeton d'exemple répond toujours : l'accueil le met en avant auprès de
   // visiteurs qui n'ont pas de session de démo, et il renvoyait un 404.
   if (estDemo() || token === TOKEN_SUIVI_DEMO) {
-    const db = demoDb();
+    const db = await demoDb();
     const dossier = db.dossiers.find((d) => d.token_public === token);
     if (!dossier) return null;
     const g = db.garage;
+    await sauverDemo();
     return {
       garage: {
         nom: g.nom,
@@ -1408,7 +1438,7 @@ export async function getSuiviParToken(
 }
 
 async function garagePourDossier(dossier: Dossier): Promise<Garage | null> {
-  if (estDemo()) return demoDb().garage;
+  if (estDemo()) return (await demoDb()).garage;
   const { data } = await supabaseAdmin()
     .from("garages")
     .select("*")
@@ -1431,7 +1461,7 @@ export async function repondreDevis(
   // Le jeton d'exemple se comporte comme la démo pour tout le monde : sans ça,
   // signer le devis depuis la vitrine renvoyait « Devis introuvable ».
   if (estDemo() || token === TOKEN_SUIVI_DEMO) {
-    const db = demoDb();
+    const db = await demoDb();
     const d = db.dossiers.find((x) => x.token_public === token);
     const v = db.devis.find((x) => x.id === devisId);
     if (!d || !v || v.dossier_id !== d.id) throw new Error("Devis introuvable");
@@ -1444,6 +1474,7 @@ export async function repondreDevis(
     }
     dossier = d;
     devis = v;
+    await sauverDemo();
   } else {
     const admin = supabaseAdmin();
     const { data: d } = await admin
@@ -1524,11 +1555,12 @@ export async function envoyerMessageClient(
 
   // Idem : répondre depuis la page d'exemple publique ne doit pas échouer.
   if (estDemo() || token === TOKEN_SUIVI_DEMO) {
-    const db = demoDb();
+    const db = await demoDb();
     dossier = db.dossiers.find((d) => d.token_public === token) ?? null;
     if (!dossier) throw new Error("Dossier introuvable");
     message.dossier_id = dossier.id;
     db.messages.push(message);
+    await sauverDemo();
   } else {
     const admin = supabaseAdmin();
     const { data: d } = await admin

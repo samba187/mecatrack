@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { cookies } from "next/headers";
+import { COOKIE_DEMO, DEMO_MODE } from "../config";
 import type {
   Devis,
   Dossier,
@@ -495,15 +497,166 @@ function seed(): DemoDb {
   };
 }
 
-const globalStore = globalThis as unknown as { __mecatrackDemo?: DemoDb };
+// ── Une démo par visiteur ───────────────────────────────────────────────────
+// Avant, l'état démo était un unique objet sur globalThis : tous les visiteurs
+// simultanés d'une même instance serverless partageaient le même garage (A
+// voyait les dossiers créés par B), et tout disparaissait au redémarrage de
+// l'instance. Désormais l'état est indexé sur la valeur du cookie mt_demo, et
+// sauvegardé dans la table demo_sessions pour survivre aux instances.
 
-export function demoDb(): DemoDb {
-  if (!globalStore.__mecatrackDemo) {
-    globalStore.__mecatrackDemo = seed();
+/** Clé utilisée quand il n'y a pas de cookie : DEMO_MODE local, build, cron. */
+const CLE_LOCALE = "local";
+
+/**
+ * Cache mémoire par instance. Sert de source de vérité pendant la requête et
+ * évite de relire Supabase à chaque appel (demoDb() est appelé plusieurs fois
+ * par page). Borné pour ne pas faire grossir l'instance indéfiniment.
+ */
+const MAX_SESSIONS = 200;
+const cacheMemoire = new Map<string, DemoDb>();
+/**
+ * Empreinte du dernier état écrit en base, par session. Permet à sauverDemo()
+ * de ne rien faire quand rien n'a changé : on peut donc l'appeler dans toutes
+ * les branches démo, lectures comprises, sans provoquer d'écriture inutile ni
+ * risquer d'oublier une modification.
+ */
+const empreintes = new Map<string, string>();
+
+function memoriser(cle: string, db: DemoDb): void {
+  // Map conserve l'ordre d'insertion : la plus ancienne entrée sort d'abord.
+  if (cacheMemoire.size >= MAX_SESSIONS && !cacheMemoire.has(cle)) {
+    const plusAncienne = cacheMemoire.keys().next().value;
+    if (plusAncienne !== undefined) {
+      cacheMemoire.delete(plusAncienne);
+      empreintes.delete(plusAncienne);
+    }
   }
-  return globalStore.__mecatrackDemo;
+  cacheMemoire.delete(cle);
+  cacheMemoire.set(cle, db);
 }
 
-export function resetDemo(): void {
-  globalStore.__mecatrackDemo = seed();
+/**
+ * Identifiant de la session de démo courante : la valeur du cookie mt_demo.
+ * Retombe sur CLE_LOCALE hors contexte de requête (build, cron) ou quand le
+ * cookie porte encore l'ancienne valeur « 1 » — le middleware la remplace par
+ * un identifiant à la première requête suivante.
+ */
+function cleSession(): string {
+  try {
+    const v = cookies().get(COOKIE_DEMO)?.value;
+    if (v && v !== "1") return v;
+  } catch {
+    /* hors contexte requête */
+  }
+  return CLE_LOCALE;
+}
+
+/** La persistance n'a de sens que si Supabase est configuré. */
+function persistanceActive(cle: string): boolean {
+  return !DEMO_MODE && cle !== CLE_LOCALE;
+}
+
+async function lireEnBase(cle: string): Promise<DemoDb | null> {
+  try {
+    const { supabaseAdmin } = await import("../supabase/server");
+    const { data } = await supabaseAdmin()
+      .from("demo_sessions")
+      .select("donnees")
+      .eq("id", cle)
+      .maybeSingle();
+    return (data?.donnees as DemoDb | undefined) ?? null;
+  } catch (e) {
+    // Table absente ou base injoignable : la démo continue en mémoire.
+    console.error("demo_sessions lecture échouée", e);
+    return null;
+  }
+}
+
+async function ecrireEnBase(cle: string, db: DemoDb): Promise<void> {
+  try {
+    const { supabaseAdmin } = await import("../supabase/server");
+    await supabaseAdmin()
+      .from("demo_sessions")
+      .upsert({ id: cle, donnees: db, updated_at: new Date().toISOString() });
+  } catch (e) {
+    console.error("demo_sessions écriture échouée", e);
+  }
+}
+
+/**
+ * État de démonstration du visiteur courant. À appeler dans toute branche démo
+ * (lecture comme écriture) ; après une modification, appeler sauverDemo().
+ */
+export async function demoDb(): Promise<DemoDb> {
+  const cle = cleSession();
+  const enMemoire = cacheMemoire.get(cle);
+  if (enMemoire) return enMemoire;
+
+  const persistee = persistanceActive(cle) ? await lireEnBase(cle) : null;
+  const db = persistee ?? seed();
+  memoriser(cle, db);
+  // Nouvelle session : on l'enregistre tout de suite, pour que le visiteur
+  // retrouve son garage même si la requête suivante tombe sur une autre
+  // instance sans avoir rien modifié entre-temps.
+  if (!persistee && persistanceActive(cle)) await ecrireEnBase(cle, db);
+  empreintes.set(cle, JSON.stringify(db));
+  return db;
+}
+
+/**
+ * Persiste l'état démo du visiteur après modification. Sans appel, la
+ * modification reste valable dans l'instance courante (comportement d'avant)
+ * mais ne survit pas à un changement d'instance : un oubli dégrade, il ne perd
+ * jamais la modification en cours de requête.
+ */
+export async function sauverDemo(): Promise<void> {
+  const cle = cleSession();
+  const db = cacheMemoire.get(cle);
+  if (!db || !persistanceActive(cle)) return;
+  const actuel = JSON.stringify(db);
+  if (actuel === empreintes.get(cle)) return; // rien n'a changé
+  empreintes.set(cle, actuel);
+  await ecrireEnBase(cle, db);
+}
+
+/** Réinitialise la démo du visiteur courant (« Quitter la démo » la recrée). */
+export async function resetDemo(): Promise<void> {
+  const cle = cleSession();
+  const db = seed();
+  memoriser(cle, db);
+  empreintes.set(cle, JSON.stringify(db));
+  if (persistanceActive(cle)) await ecrireEnBase(cle, db);
+}
+
+/** Libère une session de démo précise (« Quitter la démo »). */
+export async function oublierDemo(cle: string): Promise<void> {
+  cacheMemoire.delete(cle);
+  empreintes.delete(cle);
+  if (DEMO_MODE || cle === CLE_LOCALE) return;
+  try {
+    const { supabaseAdmin } = await import("../supabase/server");
+    await supabaseAdmin().from("demo_sessions").delete().eq("id", cle);
+  } catch (e) {
+    console.error("demo_sessions suppression échouée", e);
+  }
+}
+
+/** Purge les sessions de démo inactives. Appelée par le cron quotidien. */
+export async function purgerDemos(joursInactivite = 30): Promise<number> {
+  if (DEMO_MODE) return 0;
+  const limite = new Date(
+    Date.now() - joursInactivite * 86400000
+  ).toISOString();
+  try {
+    const { supabaseAdmin } = await import("../supabase/server");
+    const { data } = await supabaseAdmin()
+      .from("demo_sessions")
+      .delete()
+      .lt("updated_at", limite)
+      .select("id");
+    return data?.length ?? 0;
+  } catch (e) {
+    console.error("demo_sessions purge échouée", e);
+    return 0;
+  }
 }

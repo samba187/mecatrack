@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { estDemo } from "@/lib/config";
-import { demoDb } from "@/lib/demo/store";
+import { demoDb, sauverDemo } from "@/lib/demo/store";
 import { getGarageCourant } from "@/lib/db";
 import { priceIdPourPlan, stripe, stripeConfigure } from "@/lib/stripe";
 
@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
   // fictif — création d'un client « Garage Lemoine » en base Stripe, et un
   // paiement qui n'aurait provisionné aucun compte (garage_id inexistant).
   if (estDemo()) {
-    demoDb().garage.plan = plan;
+    (await demoDb()).garage.plan = plan;
+    await sauverDemo();
     return NextResponse.redirect(`${compte}?abonnement=demo`);
   }
 
