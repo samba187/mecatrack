@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { COOKIE_DEMO, DEMO_MODE } from "@/lib/config";
+import { COOKIE_DEMO, DEMO_MODE, DUREE_DEMO } from "@/lib/config";
 import { updateSession } from "@/lib/supabase/middleware";
 
 export async function middleware(request: NextRequest) {
@@ -12,7 +12,15 @@ export async function middleware(request: NextRequest) {
     request.cookies.get(COOKIE_DEMO)?.value === "1" &&
     !request.nextUrl.pathname.startsWith("/auth")
   ) {
-    return NextResponse.next();
+    // Réarme le cookie : tant que le visiteur explore, la démo ne doit jamais
+    // expirer sous ses pieds et le renvoyer vers /auth/login.
+    const res = NextResponse.next();
+    res.cookies.set(COOKIE_DEMO, "1", {
+      path: "/",
+      maxAge: DUREE_DEMO,
+      sameSite: "lax",
+    });
+    return res;
   }
   return updateSession(request);
 }

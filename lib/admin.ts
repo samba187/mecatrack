@@ -1,6 +1,6 @@
 import "server-only";
 import { createHash } from "crypto";
-import { DEMO_MODE, estDemo } from "./config";
+import { DEMO_MODE } from "./config";
 import { demoDb } from "./demo/store";
 import { stripe, stripeConfigure } from "./stripe";
 import { supabaseAdmin } from "./supabase/server";
@@ -33,7 +33,10 @@ export async function journaliser(entree: {
   niveau?: NiveauJournal;
   garage?: string | null;
 }): Promise<void> {
-  if (estDemo()) {
+  // DEMO_MODE et non estDemo() : le journal est une donnée d'exploitation, pas
+  // une sortie visible par un visiteur de la démo. Un cookie mt_demo qui traîne
+  // ne doit pas faire disparaître les événements du pilotage.
+  if (DEMO_MODE) {
     console.log(`[journal:${entree.type}] ${entree.message}`);
     return;
   }

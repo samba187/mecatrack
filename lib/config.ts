@@ -13,6 +13,14 @@ export const DEMO_MODE =
 export const COOKIE_DEMO = "mt_demo";
 
 /**
+ * Durée de vie du cookie de démo, en secondes. Volontairement longue et
+ * réarmée à chaque requête (middleware) : une démo qui expire en pleine
+ * exploration renvoie le visiteur sur une page de connexion, alors que la
+ * démo existe précisément pour tester sans compte.
+ */
+export const DUREE_DEMO = 60 * 60 * 24 * 30; // 30 jours
+
+/**
  * Vrai si la requête courante doit utiliser les données de démo : soit l'app
  * est en mode démo global, soit le visiteur a lancé une session de démo
  * (cookie) — ce qui permet à la démo de coexister avec les vrais comptes une

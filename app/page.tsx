@@ -89,6 +89,7 @@ function Hero() {
               </Link>
               <Link
                 href="/demo"
+                prefetch={false}
                 className="inline-flex h-12 items-center gap-2 rounded-xl border border-slate-300 bg-white px-6 text-base font-medium text-slate-700 shadow-sm transition-all hover:-translate-y-0.5 hover:border-slate-400"
               >
                 <MonitorSmartphone className="h-4 w-4" />
@@ -524,6 +525,7 @@ function CtaFinal() {
             </Link>
             <Link
               href="/demo"
+              prefetch={false}
               className="inline-flex h-12 items-center rounded-xl border border-white/25 px-7 text-base font-medium text-white transition-all hover:-translate-y-0.5 hover:bg-white/10"
             >
               Explorer la démo
@@ -547,7 +549,11 @@ function PiedDePage() {
           <a href="#tarifs" className="transition-colors hover:text-primary-800">
             Tarifs
           </a>
-          <Link href="/demo" className="transition-colors hover:text-primary-800">
+          <Link
+            href="/demo"
+            prefetch={false}
+            className="transition-colors hover:text-primary-800"
+          >
             Démo
           </Link>
           <Link href="/cgu" className="transition-colors hover:text-primary-800">
